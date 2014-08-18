@@ -1,0 +1,9 @@
+== GO2DIR
+
+Usefull shell helper to go usefull directories.
+
+== How to install
+#TODO
+
+== How to use
+#TODO
