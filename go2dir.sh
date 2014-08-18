@@ -30,5 +30,5 @@ go() {
   done
 
   echoerr "Sorry can't go to $1"
-  exit 1
+  return 1
 }
