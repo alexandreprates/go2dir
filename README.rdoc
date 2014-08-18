@@ -3,7 +3,8 @@
 Usefull shell helper to go usefull directories.
 
 == How to install
-#TODO
+
+  $ curl http://goo.gl/vJS98I | sh
 
 == How to use
 #TODO
