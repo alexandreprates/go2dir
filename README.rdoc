@@ -1,6 +1,6 @@
 == GO2DIR
 
-Usefull shell helper to go usefull directories.
+A simple way to go to your favorites directories
 
 == How to install
 
