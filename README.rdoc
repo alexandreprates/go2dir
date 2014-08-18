@@ -4,7 +4,7 @@ Usefull shell helper to go usefull directories.
 
 == How to install
 
-  $ curl http://goo.gl/vJS98I | sh
+  $ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | sh
 
 == How to use
 #TODO
