@@ -1,4 +1,4 @@
-git clone git@github.com:alexandreprates/go2dir.git $HOME/.go2dir
+git clone https://github.com/alexandreprates/go2dir.git $HOME/.go2dir
 
 [[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
 [[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
