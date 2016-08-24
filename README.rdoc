@@ -12,16 +12,13 @@ Install base script
 
 Add directory to go2 list:
 
-```bash
- $ cd development
- $ go2 -a
-```
+  $ cd development
+  $ go2 -a
+
 
 Go to dir from anywhere with:
 
-```bash
- $ go2 development
-```
+   $ go2 development
 
 == License (MIT license)
 
