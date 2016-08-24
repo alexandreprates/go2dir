@@ -8,16 +8,20 @@ Install base script
 
   $ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | sh
 
-Configure path for search
-
-  # in ~.bash_profile or related
-  export GOSEARCH=/home/nep/projects:$HOME/awesome_dir:~/whatever
-
 == How to use
 
-from anywhere just type the name of the directory that you want to go
+Add directory to go2 list:
 
-  go whatever (...and the magic happens)
+```bash
+ $ cd development
+ $ go2 -a
+```
+
+Go to dir from anywhere with:
+
+```bash
+ $ go2 development
+```
 
 == License (MIT license)
 

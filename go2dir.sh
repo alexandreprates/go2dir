@@ -1,34 +1,93 @@
-# GO to directories
+#!/bin/bash
+
+# GO 2 DIR
 # by Alexandre Prates
 #
 # How to use:
-#   in .bash_profile set directories to search
-#     export GOSEARCH=/home/myuser:~/workprojects:~/whatever
-#     [[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh" 
-#   in bash
-#     # go whatever (...and the magic happens)
 
-echoerr() { printf "\a"; echo "$@" 1>&2; }
+FILEPATH="$HOME/.local/share/go2dir"
+FILENAME="$FILEPATH/locations.txt"
+[ ! -d $FILEPATH ] && mkdir -p $FILEPATH
+[ ! -e $FILENAME ] && touch $FILENAME
 
-go() {
-  if [ $GOSEARCH ]; then
-    search_path=$GOSEARCH
+__echoerr() { printf "\a"; echo "$@" 1>&2; }
+
+__not_exist() {
+  cat $FILENAME | while read line
+  do
+    if [ "$1" = "$line" ]; then
+      return 1
+    fi
+  done
+  return $?
+}
+
+__add_dir() {
+  local dir=$(pwd)
+  local name=$(basename $dir)
+
+  if __not_exist "$dir" ; then
+    echo "Adicionando $dir"
+    echo -e "$dir" >> $FILENAME
   else
-    echo "GOSEARCH not found using $HOME instead."
-    search_path=$HOME
+    echo "Dir already exist"
+    return 1
+  fi
+}
+
+__list_dirs() {
+  echo -e "Maped dirs in $FILENAME\n"
+  cat $FILENAME | sort | while read line
+  do
+    echo "  $line"
+  done
+}
+
+__show_help() {
+  echo -e "usage: g2 [options] [DIRNAME]\n\nCommand line options\n\t-a: add current dir to list\n\t-l: list dirs to go\n\t-h: Show this message\n"
+  return 0
+}
+
+go2() {
+  while getopts lha opt; do
+    case $opt in
+      a)
+        __add_dir
+        return
+        ;;
+      l)
+        __list_dirs
+        return
+        ;;
+      h)
+        __show_help
+        return
+        ;;
+      \?)
+        echo "Invalid option: -$OPTARG" >&2
+        return 1
+        ;;
+      :)
+        echo "Option -$OPTARG requires an argument." >&2
+        return 1
+        ;;
+    esac
+  done
+
+  if [ -z "$1" ]; then
+    __show_help
   fi
 
-  search_array=(${=search_path//:/ })
-
-  for index in $search_array
+  cat $FILENAME | while read line
   do
-    goto=$(find $index/. -maxdepth 1 -type d -name $1 -print -quit)
-    if [ $goto ]; then
-      cd $goto
-      return;
+    name=$(basename $line)
+    if [ "$1" = "$name" ]; then
+      echo "go to $line"
+      cd $line
+      return 0
     fi
   done
 
-  echoerr "Sorry can't go to $1"
+  echo "$1 not found :("
   return 1
 }
