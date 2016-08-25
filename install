@@ -1,4 +1,25 @@
-git clone https://github.com/alexandreprates/go2dir.git $HOME/.go2dir
+#!/bin/bash
+
+pushd . > /dev/null
+
+cd $HOME
+
+json_data="$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest)"
+last_version=$(echo "$json_data" | cut -d \" -f 6)
+
+curl -s -L "https://github.com/alexandreprates/go2dir/archive/$last_version.tar.gz" -o go2dir.tar.gz
+tar -xf "go2dir.tar.gz" > /dev/null
+
+[ -d .go2dir ] && rm -rf .go2dir > /dev/null
+
+mv "go2dir-$last_version" .go2dir > /dev/null
+rm go2dir.tar.gz > /dev/null
 
 [[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
 [[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
+
+source ./.go2dir/go2dir.sh
+
+popd > /dev/null
+
+echo -e "Done!\n\ntry go2 -h to get some help"
