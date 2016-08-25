@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # GO 2 DIR
-# by Alexandre Prates
-#
-# How to use:
+# by Alexandre Prates <ajfprates@gmail.com>
+# 2.0 - 08-25-2016
 
 FILEPATH="$HOME/.local/share/go2dir"
 FILENAME="$FILEPATH/locations.txt"
@@ -44,7 +43,7 @@ __list_dirs() {
 }
 
 __show_help() {
-  echo -e "usage: g2 [options] [DIRNAME]\n\nCommand line options\n\t-a: add current dir to list\n\t-l: list dirs to go\n\t-h: Show this message\n"
+  echo -e "usage: g2 [options] [DIRNAME]\n\nCommand line options\n\t-a: Add the current directory to list\n\t-l: Lists known directories\n\t-h: Show this message\n"
   return 0
 }
 
