@@ -20,6 +20,11 @@ Go to dir from anywhere with:
 
    $ go2 development
 
+
+List maped directories:
+
+   $ go2 -l
+
 == License (MIT license)
 
 The MIT License (MIT)
