@@ -6,7 +6,7 @@ A simple way to go to your favorites directories
 
 Install base script
 
-  $ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | sh
+  $ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | bash
 
 == How to use
 
