@@ -12,8 +12,8 @@ tar -zxf "go2dir.tar.gz"
 mv "go2dir-$last_version" .go2dir
 rm go2dir.tar.gz
 
-[[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
-[[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
+[[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
+[[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
 
 popd > /dev/null
 
