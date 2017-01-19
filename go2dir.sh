@@ -39,12 +39,18 @@ go2() {
     done
   }
 
+  __recursive_add_dir() {
+    find $(pwd) -maxdepth 1 -type d >> $FILENAME
+    echo "Added dirs"
+    find $(pwd) -maxdepth 1 -type d
+  }
+
   __show_help() {
-    echo -e "usage: go2 [options] [DIRNAME]\n\nCommand line options\n\t-a: Add the current directory to list\n\t-l: Lists known directories\n\t-h: Show this message\n"
+    echo -e "usage: go2 [options] [DIRNAME]\n\nCommand line options\n\t-a: Add the current directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-h: Show this message\n"
     return 0
   }
 
-  while getopts "alh" opt; do
+  while getopts "alhr" opt; do
     case $opt in
       a)
         __add_dir
@@ -56,6 +62,10 @@ go2() {
         ;;
       h)
         __show_help
+        return
+        ;;
+      r)
+        __recursive_add_dir
         return
         ;;
       \?)
