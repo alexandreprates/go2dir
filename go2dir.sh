@@ -25,7 +25,7 @@ function go2() {
       echo "You must specify the dir to add"
       return 1
     else
-      local dir=$(readlink -f $1)
+      local dir=$(ruby -e "puts File.expand_path('$1')")
     fi
 
     if [ -d "$1" ]; then
