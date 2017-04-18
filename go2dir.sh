@@ -8,7 +8,6 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -e $FILENAME ] && touch $FILENAME
 
 function go2() {
-
   function __not_mapped() {
     local line
     cat $FILENAME | while read line
@@ -25,7 +24,7 @@ function go2() {
       echo "You must specify the dir to add"
       return 1
     else
-      local dir=$(ruby -e "puts File.expand_path('$1')")
+      local dir=$(__dir_pwd $1)
     fi
 
     if [ -d "$1" ]; then
@@ -42,6 +41,14 @@ function go2() {
       echo "$1 already mapped"
       return 1
     fi
+  }
+
+  function __dir_pwd() {
+    popd . > /dev/null
+    cd $1
+    local dirpath=$(pwd)
+    pushd > /dev/null
+    echo $dirpath
   }
 
   function __list_dirs() {
