@@ -2,4 +2,4 @@ pipeline:
   build:
     image: alpine
     commands:
-      - sh -c 'echo done'
+      - sh -c 'echo success'
