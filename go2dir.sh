@@ -44,10 +44,10 @@ function go2() {
   }
 
   function __dir_pwd() {
-    popd . > /dev/null
+    pushd > /dev/null
     cd $1
     local dirpath=$(pwd)
-    pushd > /dev/null
+    popd > /dev/null
     echo $dirpath
   }
 
