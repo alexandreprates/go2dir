@@ -76,10 +76,12 @@ function go2() {
     local line;
     cat $FILENAME | while read line
     do
-      name=$(basename $line)
-      if [ "$1" = "$name" ]; then
-        echo $line
-        break
+      if [[ !  -z  $line ]]; then
+        name=$(basename $line)
+        if [ "$1" = "$name" ]; then
+          echo $line
+          break
+        fi
       fi
     done
   }
