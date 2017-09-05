@@ -44,11 +44,12 @@ function go2() {
   }
 
   function __dir_pwd() {
-    pushd > /dev/null
-    cd $1
-    local dirpath=$(pwd)
-    popd > /dev/null
-    echo $dirpath
+    if [ ! -d $1 ]; then
+      return 1
+    else
+      cd $1
+      echo $(pwd)
+    fi
   }
 
   function __list_dirs() {
