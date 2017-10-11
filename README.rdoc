@@ -12,13 +12,23 @@ Install base script
 
 Add directory to go2 list:
 
-  $ cd development
-  $ go2 -a
+  $ go2 -a <path> [<name>]
+
+Map development to /home/someuser/workspace/development
+
+  $ cd /home/someuser/workspace/development
+  $ go2 -a .
+
+Map dev to /home/someuser/workspace/development
+
+  $ cd /home/someuser/workspace/development
+  $ go2 -a . dev
 
 
 Go to dir from anywhere with:
 
    $ go2 development
+   $ go2 dev
 
 
 List maped directories:
