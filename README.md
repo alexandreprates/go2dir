@@ -1,41 +1,76 @@
-== GO2DIR
+# GO2DIR
 
 A simple way to go to your favorites directories
 
-== How to install
+## How to install
 
 Install base script
 
-  $ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | bash
+```bash
+$ curl https://raw.githubusercontent.com/alexandreprates/go2dir/master/install | bash
+```
 
-== How to use
+## How to use
 
 Add directory to go2 list:
 
-  $ go2 -a <path> [<name>]
+```bash
+$ go2 -a <path> [<name>]
+```
 
 Map development to /home/someuser/workspace/development
 
-  $ cd /home/someuser/workspace/development
-  $ go2 -a .
+```bash
+$ cd /home/someuser/workspace/development
+$ go2 -a .
+Mapping development to /home/someuser/workspace/development
+```
 
 Map dev to /home/someuser/workspace/development
 
-  $ cd /home/someuser/workspace/development
-  $ go2 -a . dev
-
+```bash
+$ cd /home/someuser/workspace/development
+$ go2 -a . dev
+Mapping dev to /home/someuser/workspace/development
+```
 
 Go to dir from anywhere with:
 
-   $ go2 development
-   $ go2 dev
+```bash
+$ go2 development
+go to development at /home/someuser/workspace/development
 
+$ go2 dev
+go to dev at /home/someuser/workspace/development
+```
+
+Spaces in the directory name will be replaced by a dash
+
+```bash
+$ cd /home/someuser/workspace/some\ dir\ with\ spaces
+$ go2 -a .
+Mapping some-dir-with-spaces to /home/someuser/workspace/some dir with spaces
+```
+
+Go to dir from anywhere with:
+```bash
+$ go2 some-dir-with-spaces
+go some-dir-with-spaces at /home/someuser/workspace/some dir with spaces
+```
 
 List maped directories:
 
-   $ go2 -l
+```bash
+$ go2 -l
+Maped dirs in /home/someuser/.local/share/go2dir/locations.txt
 
-== License (MIT license)
+  development|/home/someuser/workspace/development
+  dev|/home/someuser/workspace/development
+  some-dir-with-spaces|/home/someuser/workspace/some dir with spaces
+
+```
+
+## License (MIT license)
 
 The MIT License (MIT)
 
