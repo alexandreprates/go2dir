@@ -9,23 +9,21 @@ FILENAME="$FILEPATH/locations.txt"
 
 function go2() {
   function __find_location() {
-    for line in $(cat $FILENAME); do
-      if [[ $line =~ (^.*)\|(.*$) ]]; then
-        NAME=${BASH_REMATCH[1]}
-        LOCATION=${BASH_REMATCH[2]}
-        if [ "$1" = "$NAME" ]; then
-            echo $LOCATION
-            break
-        fi
+    cat $FILENAME | while read line; do
+      local NAME=$(echo $line | cut -d '|' -f 1)
+      local LOCATION=$(echo $line | cut -d '|' -f 2)
+      if [ "$1" = "$NAME" ]; then
+        echo $LOCATION
+        break
       fi
     done
   }
   function __not_mapped() {
-    local location=$(__find_location $1 $2)
+    local location=$(__find_location $1)
     if [ -z "$location" ]; then
       return 0
     fi
-    return -1
+    return 1
   }
   function __add_dir() {
     if [ -z "$1" ]; then
@@ -36,7 +34,8 @@ function go2() {
     fi
     
     if [ -d "$1" ]; then
-      local name=${2-`basename $dir`}
+      local dirname=$(echo $dir | sed 's/\s/\-/g')
+      local name=${2-`basename $dirname`}
     else
       echo "Dir does not exist"
       return 1
@@ -62,7 +61,7 @@ function go2() {
   
   function __list_dirs() {
     local line
-    echo -e "Maped dirs in $FILENAME\n"
+    echo -e "Mapped dirs in $FILENAME\n"
     cat $FILENAME | sort | while read line
     do
       echo "  $line"
@@ -119,7 +118,7 @@ function go2() {
       return 1
     else
       echo "go to $1 at $location"
-      cd $location
+      cd "$location"
     fi
   fi
 }

@@ -20,11 +20,11 @@ popd > /dev/null
 ## migration to named directories
 FILENAME="$HOME/.local/share/go2dir/locations.txt"
 if [ -e $FILENAME ] && [ "$last_version" \> "2.1.3" ]; then
-  for line in $(cat $FILENAME); do
-      if [[ ! $line =~ (^.*)\|(.*$) ]]; then
-          NEWLINE="$(basename $line)|$line"
-          sed -i "s,$line,$NEWLINE," "$FILENAME"
-      fi
+  cat $FILENAME | while read line; do
+    if [[ ! $line =~ (^.*)\|(.*$) ]]; then
+        NEWLINE="$(basename $line)|$line"
+        sed -i "s,$line,$NEWLINE," "$FILENAME"
+    fi
   done
 fi
 
