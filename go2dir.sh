@@ -18,6 +18,7 @@ function go2() {
       fi
     done
   }
+
   function __not_mapped() {
     local location=$(__find_location $1)
     if [ -z "$location" ]; then
@@ -25,6 +26,7 @@ function go2() {
     fi
     return 1
   }
+
   function __add_dir() {
     if [ -z "$1" ]; then
       echo "You must specify the dir to add"
@@ -77,12 +79,30 @@ function go2() {
   }
   
   function __show_help() {
-    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-h: Show this message\n"
+    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-h: Show this message\n"
     return 0
   }
-  
+
+  function __remove_location() {
+    if [ -z "$1" ]; then
+      echo -e "You must specify the named directory to remove\nrun 'go2 -h' to see a help message"
+      return 1
+    fi
+
+    if __not_mapped "$1" ; then
+      echo -e "$1 is not mapped\nrun 'go2 -l' to list all mapped directories"
+      return 1
+    fi
+
+    local TEMP="$FILEPATH/temp"
+    grep -vwE "${1}\|" $FILENAME > $TEMP
+    cp $TEMP $FILENAME
+    rm $TEMP
+    echo "$1 was successfully removed"
+  }
+
   local OPTIND opt
-  while getopts "alhr" opt; do
+  while getopts "alhrR" opt; do
     case $opt in
       a)
         __add_dir $2 $3
@@ -98,6 +118,10 @@ function go2() {
         ;;
       r)
         __recursive_add_dir
+        return 0
+        ;;
+      R)
+        __remove_location $2
         return 0
         ;;
       \?)

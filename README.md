@@ -59,7 +59,6 @@ go some-dir-with-spaces at /home/someuser/workspace/some dir with spaces
 ```
 
 List maped directories:
-
 ```bash
 $ go2 -l
 Maped dirs in /home/someuser/.local/share/go2dir/locations.txt
@@ -68,6 +67,12 @@ Maped dirs in /home/someuser/.local/share/go2dir/locations.txt
   dev|/home/someuser/workspace/development
   some-dir-with-spaces|/home/someuser/workspace/some dir with spaces
 
+```
+
+Removed maped directories:
+```bash
+$ go2 -R development
+development was successfully removed
 ```
 
 ## License (MIT license)
