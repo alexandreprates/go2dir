@@ -8,6 +8,10 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -e $FILENAME ] && touch $FILENAME
 
 function go2() {
+  function __echoerr() {
+    echo $@ >&2
+  }
+
   function __find_location() {
     cat $FILENAME | while read line; do
       local NAME=$(echo $line | cut -d '|' -f 1)
@@ -29,29 +33,29 @@ function go2() {
 
   function __add_dir() {
     if [ -z "$1" ]; then
-      echo "You must specify the dir to add"
+      __echoerr "You must specify the dir to add"
       return 1
     else
       local dir=$(__dir_pwd $1)
     fi
-    
+
     if [ -d "$1" ]; then
       local dirname=$(echo $dir | sed 's/\s/\-/g')
       local name=${2-`basename $dirname`}
     else
-      echo "Dir does not exist"
+      __echoerr "Dir does not exist"
       return 1
     fi
-    
+
     if __not_mapped "$name" ; then
       echo "Mapping $name to $dir"
       echo -e "$name|$dir" >> $FILENAME
     else
-      echo "$name is already mapped to $dir"
+      __echoerr "$name is already mapped to $dir"
       return 1
     fi
   }
-  
+
   function __dir_pwd() {
     if [ ! -d $1 ]; then
       return 1
@@ -60,7 +64,7 @@ function go2() {
       echo $(pwd)
     fi
   }
-  
+
   function __list_dirs() {
     local line
     echo -e "Mapped dirs in $FILENAME\n"
@@ -70,14 +74,14 @@ function go2() {
     done
     echo ""
   }
-  
+
   function __recursive_add_dir() {
     find $(pwd) -maxdepth 1 -type d | sort | while read line
     do
       __add_dir $line $(basename $(pwd))-$(basename $line)
     done
   }
-  
+
   function __show_help() {
     echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-h: Show this message\n"
     return 0
@@ -85,13 +89,13 @@ function go2() {
 
   function __remove_location() {
     if [ -z "$1" ]; then
-      echo -e "You must specify the named directory to remove\nrun 'go2 -h' to see a help message"
-      return 1
+      __echoerr "You must specify the named directory to remove\nrun 'go2 -h' to see a help message"
+      return 2
     fi
 
     if __not_mapped "$1" ; then
-      echo -e "$1 is not mapped\nrun 'go2 -l' to list all mapped directories"
-      return 1
+      __echoerr "$1 is not mapped\nrun 'go2 -l' to list all mapped directories"
+      return 3
     fi
 
     local TEMP="$FILEPATH/temp"
@@ -122,7 +126,7 @@ function go2() {
         ;;
       R)
         __remove_location $2
-        return 0
+        return $?
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -130,7 +134,7 @@ function go2() {
         ;;
     esac
   done
-  
+
   if [ -z "$1" ]; then
     __show_help
     return 0
@@ -138,7 +142,7 @@ function go2() {
     local location=$(__find_location $1)
 
     if [ -z "$location" ]; then
-      echo " Sorry, i didn't find $1"
+      __echoerr " Sorry, i didn't find $1"
       return 1
     else
       echo "go to $1 at $location"
