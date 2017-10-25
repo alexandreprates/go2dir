@@ -2,6 +2,8 @@
 
 A simple way to go to your favorites directories
 
+![How to Use](https://github.com/alexandreprates/go2dir/blob/dev/examples/how_to_use.gif?raw=true)
+
 ## How to install
 
 Install base script
