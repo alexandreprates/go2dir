@@ -32,7 +32,7 @@ function go2() {
   }
 
   function __alias_for_dir() {
-    local dirname=$(echo $dir | sed 's/[ ]/\-/g')
+    local dirname=$(echo $1 | sed 's/[ ]/\-/g')
     echo $(basename "$dirname")
   }
 
@@ -50,7 +50,7 @@ function go2() {
     fi
 
     if [ ! $2 ]; then
-      name=$(__alias_for_dir "$1")
+      name=$(__alias_for_dir "$dir")
     else
       name=$2
     fi
