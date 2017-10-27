@@ -40,7 +40,7 @@ function go2() {
     fi
 
     if [ -d "$1" ]; then
-      local dirname=$(echo $dir | sed 's/\s/\-/g')
+      local dirname=$(echo $dir | sed 's/[ ]/\-/g')
       local name=${2-`basename $dirname`}
     else
       __echoerr "Dir does not exist"
