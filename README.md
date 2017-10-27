@@ -4,6 +4,8 @@
 
 A simple way to go to your favorites directories
 
+[![Build Status](https://travis-ci.org/alexandreprates/go2dir.svg?branch=dev)](https://travis-ci.org/alexandreprates/go2dir)
+
 ![How to Use](https://github.com/alexandreprates/go2dir/blob/dev/examples/how_to_use.gif?raw=true)
 
 ## How to install
@@ -102,4 +104,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-

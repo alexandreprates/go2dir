@@ -50,4 +50,18 @@ test go2 -R unknow_named
 assert_fail 3
 assert_stderr "unknow_named is not mapped"
 
+mkdir -p /tmp/projects/foo\ bar
+cd /tmp/projects/foo\ bar
+
+test go2 -a .
+assert_success
+assert_stdout "Mapping foo-bar to /tmp/projects/foo bar"
+
+cd
+
+test go2 foo-bar
+assert_success
+assert_stdout "go to foo-bar at /tmp/projects/foo bar"
+assert_equal "$(pwd)" "/tmp/projects/foo bar"
+
 report
