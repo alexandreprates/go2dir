@@ -7,8 +7,15 @@ LOCATIONS="$HOME/.local/share/go2dir/locations.txt"
 mkdir -p $DESTINATION
 curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $DESTINATION --strip 1
 
-[[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
-[[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
+[[ -s "$HOME/.bashrc" ]]  && cat <<-EOS >> $HOME/.bashrc
+# Enable go2 command 
+[[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
+EOS
+
+[[ -s "$HOME/.zshrc" ]]  && cat <<-EOS >> $HOME/.zshrc
+# Enable go2 command 
+[[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
+EOS
 
 popd > /dev/null
 
