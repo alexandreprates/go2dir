@@ -1,16 +1,11 @@
 pushd . > /dev/null
-cd $HOME
 
-json_data="$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest)"
-last_version=$(echo "$json_data" | cut -d \" -f 6)
+DESTINATION=$HOME/.go2dir
+LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+LOCATIONS="$HOME/.local/share/go2dir/locations.txt"
 
-curl -s -L "https://github.com/alexandreprates/go2dir/archive/$last_version.tar.gz" -o go2dir.tar.gz
-tar -zxf "go2dir.tar.gz"
-
-[ -d .go2dir ] && rm -rf .go2dir
-
-mv "go2dir-$last_version" .go2dir
-rm go2dir.tar.gz
+mkdir -p $DESTINATION
+curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $DESTINATION --strip 1
 
 [[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
 [[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
@@ -18,16 +13,13 @@ rm go2dir.tar.gz
 popd > /dev/null
 
 ## migration to named directories
-FILENAME="$HOME/.local/share/go2dir/locations.txt"
-if [ -e $FILENAME ] && [ "$last_version" \> "2.1.3" ]; then
-  cat $FILENAME | while read line; do
+if [ -e $LOCATIONS ] && [ "$LAST_VERSION" \> "2.1.3" ]; then
+  cat $LOCATIONS | while read line; do
     if [[ ! $line =~ (^.*)\|(.*$) ]]; then
         NEWLINE="$(basename $line)|$line"
-        sed -i "s,$line,$NEWLINE," "$FILENAME"
+        sed -i "s,$line,$NEWLINE," "$LOCATIONS"
     fi
   done
 fi
 
-source $HOME/.go2dir/go2dir.sh
-
-echo -e "Done!\n\ntry go2 -h to get some help"
+echo -e "\n\nStart new session to enable go2dir!\nEnjoy!"
