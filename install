@@ -2,31 +2,39 @@ pushd . > /dev/null
 
 DESTINATION=$HOME/.go2dir
 LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
-LOCATIONS="$HOME/.local/share/go2dir/locations.txt"
 
 mkdir -p $DESTINATION
 curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $DESTINATION --strip 1
 
-[[ -s "$HOME/.bashrc" ]]  && cat <<-EOS >> $HOME/.bashrc
-# Enable go2 command 
-[[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
-EOS
 
-[[ -s "$HOME/.zshrc" ]]  && cat <<-EOS >> $HOME/.zshrc
-# Enable go2 command 
+function rc_loader() {
+  [[ -s $1 ]]  && cat <<-EOS >> $1
+# Enable go2 command
 [[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
 EOS
+}
+
+function create_alias() {
+  source /go2dir/go2dir.sh
+  go2 -h # Load internal functions
+
+  local LOCATIONS="$HOME/.local/share/go2dir/locations.txt"
+  cat $LOCATIONS | while read LINE; do
+    if [[ ! $LINE =~ \| ]]; then
+        echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONS.new
+    else
+        echo "$LINE" >> $LOCATIONS.new
+    fi
+  done
+  mv $LOCATIONS.new $LOCATIONS
+}
+
+
+rc_loader "$HOME/.bashrc"
+rc_loader "$HOME/.zshrc"
+
+create_alias
 
 popd > /dev/null
 
-## migration to named directories
-if [ -e $LOCATIONS ] && [ "$LAST_VERSION" \> "2.1.3" ]; then
-  cat $LOCATIONS | while read line; do
-    if [[ ! $line =~ (^.*)\|(.*$) ]]; then
-        NEWLINE="$(basename $line)|$line"
-        sed -i "s,$line,$NEWLINE," "$LOCATIONS"
-    fi
-  done
-fi
-
-echo -e "\n\nStart new session to enable go2dir!\nEnjoy!"
+echo -e "\n\nStart new session to enable go2dir!\nAnd Enjoy!"
