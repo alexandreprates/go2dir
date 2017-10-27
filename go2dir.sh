@@ -31,6 +31,11 @@ function go2() {
     return 1
   }
 
+  function __alias_for_dir() {
+    local dirname=$(echo $dir | sed 's/[ ]/\-/g')
+    echo $(basename "$dirname")
+  }
+
   function __add_dir() {
     if [ -z "$1" ]; then
       __echoerr "You must specify the dir to add"
@@ -39,12 +44,15 @@ function go2() {
       local dir=$(__dir_pwd $1)
     fi
 
-    if [ -d "$1" ]; then
-      local dirname=$(echo $dir | sed 's/[ ]/\-/g')
-      local name=${2-`basename $dirname`}
-    else
+    if [ ! -d "$1" ]; then
       __echoerr "Dir does not exist"
       return 1
+    fi
+
+    if [ ! $2 ]; then
+      name=$(__alias_for_dir "$1")
+    else
+      name=$2
     fi
 
     if __not_mapped "$name" ; then
