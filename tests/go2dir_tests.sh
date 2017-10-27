@@ -64,4 +64,16 @@ assert_success
 assert_stdout "go to foo-bar at /tmp/projects/foo bar"
 assert_equal "$(pwd)" "/tmp/projects/foo bar"
 
+mkdir -p /tmp/projects/sources
+
+test go2 -a /tmp/projects/sources
+assert_success
+assert_stdout "Mapping sources to /tmp/projects/sources"
+
+cd
+test go2 sources
+assert_success
+assert_stdout "go to sources at /tmp/projects/sources"
+assert_equal "$(pwd)" "/tmp/projects/sources"
+
 report
