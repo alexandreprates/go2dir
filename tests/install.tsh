@@ -1,6 +1,6 @@
 # setup
-# apk add --no-cache curl > /dev/null
-# touch $HOME/.bashrc
+apk add --no-cache curl > /dev/null
+touch $HOME/.bashrc
 
 test bash install
 assert_success
