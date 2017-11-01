@@ -2,7 +2,7 @@
 # apk add --no-cache curl > /dev/null
 # touch $HOME/.bashrc
 
-test cat install | bash -
+test bash install
 assert_success
 assert_stdout "Go2dir has been successfully installed"
 assert_file "$HOME/.go2dir/go2dir.sh"
