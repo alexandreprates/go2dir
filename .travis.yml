@@ -21,4 +21,5 @@ os:
 script:
   - echo "$TRAVIS_OS_NAME"
   - bash --version
+  - which bash
   - ./tests/tesht/tesht.sh ./tests/*.tsh
