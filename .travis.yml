@@ -19,7 +19,7 @@ os:
   - linux
 
 before_install:
-  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then apt-get install -qqy curl; fi
+  - [[ ! "$TRAVIS_OS_NAME" == "osx" ]] && sudo apt-get install -qqy curl
 
 script:
   - echo "$TRAVIS_OS_NAME"
