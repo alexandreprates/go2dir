@@ -7,6 +7,21 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -d $FILEPATH ] && mkdir -p $FILEPATH
 [ ! -e $FILENAME ] && touch $FILENAME
 
+function _comp_go2() {
+  function __location_list() {
+    cat $FILENAME | cut -d '|' -f 1
+  }
+
+  COMPREPLY=();
+  local word="${COMP_WORDS[COMP_CWORD]}";
+  if [ "$COMP_CWORD" -eq 1 ]; then
+      COMPREPLY=($(compgen -W "$(__location_list)" -- "$word"));
+  fi
+  return 0
+}
+
+complete -o bashdefault -F _comp_go2 go2
+
 function go2() {
   function __echoerr() {
     echo $@ >&2
