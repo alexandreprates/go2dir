@@ -1,14 +1,24 @@
-sudo: required
+# sudo: required
+#
+# services:
+#   - docker
+#
+# before_install:
+# - docker pull bash:latest
+# - docker pull bash:4
+# - docker pull bash:3
+#
+# script:
+# - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:latest ./tests/tesht/tesht.sh './tests/*.tsh'"
+# - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:4 ./tests/tesht/tesht.sh './tests/*.tsh'"
+# - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:3 ./tests/tesht/tesht.sh './tests/*.tsh'"
 
-services:
-  - docker
-
-before_install:
-- docker pull bash:latest
-- docker pull bash:4
-- docker pull bash:3
+language: c
+os:
+  - osx
+  - linux
 
 script:
-- "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:latest ./tests/tesht/tesht.sh './tests/*.tsh'"
-- "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:4 ./tests/tesht/tesht.sh './tests/*.tsh'"
-- "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:3 ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - echo "$TRAVIS_OS_NAME"
+  - bash --version
+  - ./tests/tesht/tesht.sh ./tests/*.tsh
