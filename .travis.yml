@@ -18,6 +18,9 @@ os:
   - osx
   - linux
 
+before_install:
+  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then apt-get install -qqy curl; fi
+
 script:
   - echo "$TRAVIS_OS_NAME"
   - bash --version
