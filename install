@@ -1,40 +1,39 @@
-pushd . > /dev/null
-
-DESTINATION=$HOME/.go2dir
+# Go2Dir Install Script
+# source: https://github.com/alexandreprates/go2dir
+GO2DIRSOURCE=$HOME/.go2dir
 LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
-
-mkdir -p $DESTINATION
-curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $DESTINATION --strip 1
-
+LOCATIONSDIR=$HOME/.local/share/go2dir
+LOCATIONSSOURCE=$LOCATIONSDIR/locations.txt
 
 function rc_loader() {
-  [[ -s $1 ]]  && cat <<-EOS >> $1
+  [[ -f $1 ]]  && cat <<-EOS >> $1
 # Enable go2 command
 [[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
 EOS
 }
 
-function create_alias() {
-  source /go2dir/go2dir.sh
-  go2 -h # Load internal functions
+# Creating locations
+[[ -d $LOCATIONSDIR ]] && mkdir -p $LOCATIONSDIR
+[[ -f $LOCATIONSSOURCE ]] && touch $LOCATIONSSOURCE
 
-  local LOCATIONS="$HOME/.local/share/go2dir/locations.txt"
-  cat $LOCATIONS | while read LINE; do
-    if [[ ! $LINE =~ \| ]]; then
-        echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONS.new
-    else
-        echo "$LINE" >> $LOCATIONS.new
-    fi
-  done
-  mv $LOCATIONS.new $LOCATIONS
-}
+# Placing source
+mkdir -p $GO2DIRSOURCE
+curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $GO2DIRSOURCE --strip 1
 
-
+# Adding to load rc
 rc_loader "$HOME/.bashrc"
 rc_loader "$HOME/.zshrc"
 
-create_alias
+# Migrating old locations to new format
+source /go2dir/go2dir.sh # Load source
+go2 -h > dev/null # Load internal functions. I need this to use __alias_for_dir
+cat $LOCATIONSSOURCE | while read LINE; do
+  if [[ ! $LINE =~ \| ]]; then
+      echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONSSOURCE.new
+  else
+      echo "$LINE" >> $LOCATIONSSOURCE.new
+  fi
+done
+mv $LOCATIONSSOURCE.new $LOCATIONSSOURCE
 
-popd > /dev/null
-
-echo -e "\n\nStart new session to enable go2dir!\nAnd Enjoy!"
+echo -e "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!"
