@@ -1,13 +1,15 @@
 language: c
+sudo: required
 
-os:
-  - osx
-  - precise
-  - trusty
+services:
+  - docker
 
 before_install:
-  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then sudo apt-get install -qqy curl; fi
+  - docker pull bash:latest
+  - docker pull bash:4
+  - docker pull bash:3
 
 script:
-  - bash --version
-  - ./tests/tesht/tesht.sh ./tests/*.tsh
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:latest ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:4 ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:3 ./tests/tesht/tesht.sh './tests/*.tsh'"
