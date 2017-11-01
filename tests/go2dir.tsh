@@ -1,5 +1,5 @@
 # Load source
-source /go2dir/go2dir.sh
+source go2dir.sh
 
 test go2 -l
 assert_success
