@@ -1,39 +1,43 @@
 # Go2Dir Install Script
 # source: https://github.com/alexandreprates/go2dir
-GO2DIRSOURCE=$HOME/.go2dir
-LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
-LOCATIONSDIR=$HOME/.local/share/go2dir
-LOCATIONSSOURCE=$LOCATIONSDIR/locations.txt
 
-function rc_loader() {
-  [[ -f $1 ]]  && cat <<-EOS >> $1
-# Enable go2 command
-[[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
+echo "Preparing to install Go2Dir"
+
+SOURCEGO2DIR=$HOME/.go2dir/go2dir.sh
+LOCATIONS2GO=$HOME/.local/share/go2dir/locations.txt
+LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+
+function set_loader() {
+  if [[ -a $1 ]] && ! grep "go2dir.sh" $1 > /dev/null 2>&1; then
+    cat <<-EOS >> $1
+  # Enable go2 command
+  [[ -a $SOURCEGO2DIR ]] && source $SOURCEGO2DIR
 EOS
+  fi
 }
 
 # Creating locations
-[[ -d $LOCATIONSDIR ]] && mkdir -p $LOCATIONSDIR
-[[ -f $LOCATIONSSOURCE ]] && touch $LOCATIONSSOURCE
+[[ ! -d `dirname $LOCATIONS2GO` ]] && mkdir -p `dirname $LOCATIONS2GO`
+[[ ! -f $LOCATIONS2GO ]] && touch $LOCATIONS2GO
 
 # Placing source
-mkdir -p $GO2DIRSOURCE
-curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $GO2DIRSOURCE --strip 1
+mkdir -p `dirname $SOURCEGO2DIR`
+curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C `dirname $SOURCEGO2DIR` --strip 1
 
 # Adding to load rc
-rc_loader "$HOME/.bashrc"
-rc_loader "$HOME/.zshrc"
+set_loader "$HOME/.bashrc"
+set_loader "$HOME/.zshrc"
 
 # Migrating old locations to new format
-source /go2dir/go2dir.sh # Load source
-go2 -h > dev/null # Load internal functions. I need this to use __alias_for_dir
-cat $LOCATIONSSOURCE | while read LINE; do
+source $SOURCEGO2DIR
+go2 -h > /dev/null # Load internal functions. I need this to use __alias_for_dir
+cat $LOCATIONS2GO | while read LINE; do
   if [[ ! $LINE =~ \| ]]; then
-      echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONSSOURCE.new
+      echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONS2GO.tmp
   else
-      echo "$LINE" >> $LOCATIONSSOURCE.new
+      echo "$LINE" >> $LOCATIONS2GO.tmp
   fi
 done
-mv $LOCATIONSSOURCE.new $LOCATIONSSOURCE
+mv $LOCATIONS2GO.tmp $LOCATIONS2GO
 
 echo -e "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!"

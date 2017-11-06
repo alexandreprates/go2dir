@@ -2,12 +2,12 @@
 # by Alexandre Prates <ajfprates@gmail.com>
 # 2.x - 08-25-2016
 
-FILEPATH="$HOME/.local/share/go2dir"
-FILENAME="$FILEPATH/locations.txt"
-[ ! -d $FILEPATH ] && mkdir -p $FILEPATH
-[ ! -e $FILENAME ] && touch $FILENAME
+LOCATIONS2GO="$HOME/.local/share/go2dir/locations.txt"
 
 function go2() {
+  [ ! -d `dirname $LOCATIONS2GO` ] && mkdir -p `dirname $LOCATIONS2GO`
+  [ ! -e $LOCATIONS2GO ] && touch $LOCATIONS2GO
+
   local CURRENTVERSION=$(cat $HOME/.go2dir/version.txt)
 
   function __echoerr() {
@@ -15,7 +15,7 @@ function go2() {
   }
 
   function __find_location() {
-    cat $FILENAME | while read line; do
+    cat $LOCATIONS2GO | while read line; do
       local NAME=$(echo $line | cut -d '|' -f 1)
       local LOCATION=$(echo $line | cut -d '|' -f 2)
       if [ "$1" = "$NAME" ]; then
@@ -59,7 +59,7 @@ function go2() {
 
     if __not_mapped "$name" ; then
       echo "Mapping $name to $dir"
-      echo -e "$name|$dir" >> $FILENAME
+      echo -e "$name|$dir" >> $LOCATIONS2GO
     else
       __echoerr "$name is already mapped to $dir"
       return 1
@@ -77,8 +77,8 @@ function go2() {
 
   function __list_dirs() {
     local line
-    echo -e "Mapped dirs in $FILENAME\n"
-    cat $FILENAME | sort | while read line
+    echo -e "Mapped dirs in $LOCATIONS2GO\n"
+    cat $LOCATIONS2GO | sort | while read line
     do
       echo "  $line"
     done
@@ -108,10 +108,9 @@ function go2() {
       return 3
     fi
 
-    local TEMP="$FILEPATH/temp"
-    grep -vwE "${1}\|" $FILENAME > $TEMP
-    cp $TEMP $FILENAME
-    rm $TEMP
+    local TEMP="$LOCATIONS2GO.tmp"
+    grep -vwE "${1}\|" $LOCATIONS2GO > $TEMP
+    mv $TEMP $LOCATIONS2GO
     echo "$1 was successfully removed"
   }
 

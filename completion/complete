@@ -2,7 +2,7 @@
 
 function _go2_completion() {
   function __location_list() {
-    cat $FILENAME | cut -d '|' -f 1
+    cat $LOCATIONS2GO | cut -d '|' -f 1
   }
 
   COMPREPLY=();
