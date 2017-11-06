@@ -7,22 +7,10 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -d $FILEPATH ] && mkdir -p $FILEPATH
 [ ! -e $FILENAME ] && touch $FILENAME
 
-function _comp_go2() {
-  function __location_list() {
-    cat $FILENAME | cut -d '|' -f 1
-  }
-
-  COMPREPLY=();
-  local word="${COMP_WORDS[COMP_CWORD]}";
-  if [ "$COMP_CWORD" -eq 1 ]; then
-      COMPREPLY=($(compgen -W "$(__location_list)" -- "$word"));
-  fi
-  return 0
-}
-
-complete -o bashdefault -F _comp_go2 go2
-
 function go2() {
+  
+  local CURRENTVERSION="2.2.0"
+
   function __echoerr() {
     echo $@ >&2
   }
@@ -106,7 +94,7 @@ function go2() {
   }
 
   function __show_help() {
-    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-h: Show this message\n"
+    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-v: Show version\n\t-h: Show this message\n"
     return 0
   }
 
@@ -129,7 +117,7 @@ function go2() {
   }
 
   local OPTIND opt
-  while getopts "alhrR" opt; do
+  while getopts "alhrRv" opt; do
     case $opt in
       a)
         __add_dir $2 $3
@@ -150,6 +138,10 @@ function go2() {
       R)
         __remove_location $2
         return $?
+        ;;
+      v)
+        echo "go2dir version $CURRENTVERSION"
+        return 0
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -173,3 +165,15 @@ function go2() {
     fi
   fi
 }
+
+# Load autocomplete
+case $(basename $SHELL) in
+  zsh)
+    fpath=($HOME/.go2dir/completion/zsh $fpath)
+    compinit
+    ;;
+  sh | bash)
+    source $HOME/.go2dir/completion/bash_completion.sh
+    ;;
+  *)
+esac
