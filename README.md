@@ -4,9 +4,7 @@
 
 A simple way to go to your favorites directories
 
-[![Build Status](https://travis-ci.org/alexandreprates/go2dir.svg?branch=dev)](https://travis-ci.org/alexandreprates/go2dir)
-
-![How to Use](https://github.com/alexandreprates/go2dir/blob/dev/examples/how_to_use.gif?raw=true)
+![How to Use](https://github.com/alexandreprates/go2dir/blob/master/examples/how_to_use.gif?raw=true)
 
 ## How to install
 
