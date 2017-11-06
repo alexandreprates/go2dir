@@ -8,7 +8,7 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -e $FILENAME ] && touch $FILENAME
 
 function go2() {
-  
+
   local CURRENTVERSION="2.2.0"
 
   function __echoerr() {
@@ -167,13 +167,9 @@ function go2() {
 }
 
 # Load autocomplete
-case $(basename $SHELL) in
-  zsh)
-    fpath=($HOME/.go2dir/completion/zsh $fpath)
-    compinit
-    ;;
-  sh | bash)
-    source $HOME/.go2dir/completion/bash_completion.sh
-    ;;
-  *)
-esac
+if type complete > /dev/null 2>&1; then
+  source $HOME/.go2dir/completion/bash_completion.sh
+elif type compinit > /dev/null 2>&1; then
+  fpath=($HOME/.go2dir/completion/zsh $fpath)
+  compinit
+fi
