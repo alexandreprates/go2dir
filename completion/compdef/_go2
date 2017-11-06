@@ -1,9 +1,10 @@
 #compdef go2
 
+# Autocomple for **compdef** (zsh)
+
 function __location_list() {
   cat $FILENAME | cut -d '|' -f 1
 }
-
 
 local -a commands
 commands=(

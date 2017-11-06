@@ -167,9 +167,9 @@ function go2() {
 }
 
 # Load autocomplete
-if type complete > /dev/null 2>&1; then
-  source $HOME/.go2dir/completion/bash_completion.sh
-elif type compinit > /dev/null 2>&1; then
-  fpath=($HOME/.go2dir/completion/zsh $fpath)
+if [[ -a $HOME/.go2dir/completion/complete ]] && type complete > /dev/null 2>&1; then
+  source $HOME/.go2dir/completion/complete
+elif [[ -d $HOME/.go2dir/completion/compdef ]] && type compinit > /dev/null 2>&1; then
+  fpath=($HOME/.go2dir/completion/compdef $fpath)
   compinit
 fi
