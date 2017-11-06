@@ -8,8 +8,7 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -e $FILENAME ] && touch $FILENAME
 
 function go2() {
-
-  local CURRENTVERSION="2.2.0"
+  local CURRENTVERSION=$(cat $HOME/.go2dir/version.txt)
 
   function __echoerr() {
     echo $@ >&2
