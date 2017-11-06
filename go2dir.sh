@@ -8,6 +8,9 @@ FILENAME="$FILEPATH/locations.txt"
 [ ! -e $FILENAME ] && touch $FILENAME
 
 function go2() {
+
+  local CURRENTVERSION="2.2.0"
+
   function __echoerr() {
     echo $@ >&2
   }
@@ -31,6 +34,11 @@ function go2() {
     return 1
   }
 
+  function __alias_for_dir() {
+    local dirname=$(echo $1 | sed 's/[ ]/\-/g')
+    echo $(basename "$dirname")
+  }
+
   function __add_dir() {
     if [ -z "$1" ]; then
       __echoerr "You must specify the dir to add"
@@ -39,12 +47,15 @@ function go2() {
       local dir=$(__dir_pwd $1)
     fi
 
-    if [ -d "$1" ]; then
-      local dirname=$(echo $dir | sed 's/[ ]/\-/g')
-      local name=${2-`basename $dirname`}
-    else
+    if [ ! -d "$1" ]; then
       __echoerr "Dir does not exist"
       return 1
+    fi
+
+    if [ ! $2 ]; then
+      name=$(__alias_for_dir "$dir")
+    else
+      name=$2
     fi
 
     if __not_mapped "$name" ; then
@@ -83,7 +94,7 @@ function go2() {
   }
 
   function __show_help() {
-    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-h: Show this message\n"
+    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-v: Show version\n\t-h: Show this message\n"
     return 0
   }
 
@@ -106,7 +117,7 @@ function go2() {
   }
 
   local OPTIND opt
-  while getopts "alhrR" opt; do
+  while getopts "alhrRv" opt; do
     case $opt in
       a)
         __add_dir $2 $3
@@ -127,6 +138,10 @@ function go2() {
       R)
         __remove_location $2
         return $?
+        ;;
+      v)
+        echo "go2dir version $CURRENTVERSION"
+        return 0
         ;;
       \?)
         echo "Invalid option: -$OPTARG" >&2
@@ -150,3 +165,11 @@ function go2() {
     fi
   fi
 }
+
+# Load autocomplete
+if [[ -a $HOME/.go2dir/completion/complete ]] && type complete > /dev/null 2>&1; then
+  source $HOME/.go2dir/completion/complete
+elif [[ -d $HOME/.go2dir/completion/compdef ]] && type compinit > /dev/null 2>&1; then
+  fpath=($HOME/.go2dir/completion/compdef $fpath)
+  compinit
+fi

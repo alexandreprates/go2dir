@@ -1,0 +1,24 @@
+#compdef go2
+
+# Autocomple for **compdef** (zsh)
+
+function __location_list() {
+  cat $FILENAME | cut -d '|' -f 1
+}
+
+local -a commands
+commands=(
+  $(__location_list)
+  '-a:add location to list.'
+  '-l:list locations'
+  '-r:add all subdirs to list.'
+  '-R:remove directory from list.'
+  '-v:show version'
+  '-h:Show help'
+)
+
+if (( CURRENT == 2 )); then
+  _describe -t commands 'commands' commands
+fi
+
+return 0

@@ -1,0 +1,3 @@
+[submodule "tests/tesht"]
+	path = tests/tesht
+	url = https://github.com/alexandreprates/tesht.git

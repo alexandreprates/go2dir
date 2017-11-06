@@ -1,33 +1,39 @@
-pushd . > /dev/null
-cd $HOME
+# Go2Dir Install Script
+# source: https://github.com/alexandreprates/go2dir
+GO2DIRSOURCE=$HOME/.go2dir
+LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+LOCATIONSDIR=$HOME/.local/share/go2dir
+LOCATIONSSOURCE=$LOCATIONSDIR/locations.txt
 
-json_data="$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest)"
-last_version=$(echo "$json_data" | cut -d \" -f 6)
+function rc_loader() {
+  [[ -f $1 ]]  && cat <<-EOS >> $1
+# Enable go2 command
+[[ -s $HOME/.go2dir/go2dir.sh ]] && source $HOME/.go2dir/go2dir.sh
+EOS
+}
 
-curl -s -L "https://github.com/alexandreprates/go2dir/archive/$last_version.tar.gz" -o go2dir.tar.gz
-tar -zxf "go2dir.tar.gz"
+# Creating locations
+[[ -d $LOCATIONSDIR ]] && mkdir -p $LOCATIONSDIR
+[[ -f $LOCATIONSSOURCE ]] && touch $LOCATIONSSOURCE
 
-[ -d .go2dir ] && rm -rf .go2dir
+# Placing source
+mkdir -p $GO2DIRSOURCE
+curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C $GO2DIRSOURCE --strip 1
 
-mv "go2dir-$last_version" .go2dir
-rm go2dir.tar.gz
+# Adding to load rc
+rc_loader "$HOME/.bashrc"
+rc_loader "$HOME/.zshrc"
 
-[[ -s "$HOME/.bashrc" ]] && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.bashrc
-[[ -s "$HOME/.zshrc" ]]  && echo '[[ -s "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"' >> $HOME/.zshrc
+# Migrating old locations to new format
+source /go2dir/go2dir.sh # Load source
+go2 -h > dev/null # Load internal functions. I need this to use __alias_for_dir
+cat $LOCATIONSSOURCE | while read LINE; do
+  if [[ ! $LINE =~ \| ]]; then
+      echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONSSOURCE.new
+  else
+      echo "$LINE" >> $LOCATIONSSOURCE.new
+  fi
+done
+mv $LOCATIONSSOURCE.new $LOCATIONSSOURCE
 
-popd > /dev/null
-
-## migration to named directories
-FILENAME="$HOME/.local/share/go2dir/locations.txt"
-if [ -e $FILENAME ] && [ "$last_version" \> "2.1.3" ]; then
-  cat $FILENAME | while read line; do
-    if [[ ! $line =~ (^.*)\|(.*$) ]]; then
-        NEWLINE="$(basename $line)|$line"
-        sed -i "s,$line,$NEWLINE," "$FILENAME"
-    fi
-  done
-fi
-
-source $HOME/.go2dir/go2dir.sh
-
-echo -e "Done!\n\ntry go2 -h to get some help"
+echo -e "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!"

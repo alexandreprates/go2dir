@@ -1,14 +1,15 @@
+language: c
 sudo: required
 
 services:
   - docker
 
 before_install:
-- docker pull bash:latest
-- docker pull bash:4
-- docker pull bash:3
+  - docker pull bash:latest
+  - docker pull bash:4
+  - docker pull bash:3
 
 script:
-- "docker run --rm -it -v $(pwd):/go2dir bash:latest /go2dir/tests/go2dir_tests.sh"
-- "docker run --rm -it -v $(pwd):/go2dir bash:3      /go2dir/tests/go2dir_tests.sh"
-- "docker run --rm -it -v $(pwd):/go2dir bash:4      /go2dir/tests/go2dir_tests.sh"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:latest ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:4 ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:3 ./tests/tesht/tesht.sh './tests/*.tsh'"
