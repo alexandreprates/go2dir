@@ -5,7 +5,21 @@ echo "Preparing to install Go2Dir"
 
 SOURCEGO2DIR=$HOME/.go2dir/go2dir.sh
 LOCATIONS2GO=$HOME/.local/share/go2dir/locations.txt
-LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+
+case $RELEASE in
+    alpha)
+      echo "Using alpha version!"
+      SOURCEURL="https://github.com/alexandreprates/go2dir/archive/master.tar.gz"
+    ;;
+    beta)
+      echo "Using beta version!"
+      SOURCEURL="https://github.com/alexandreprates/go2dir/archive/dev.tar.gz"
+    ;;
+    *)
+      LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+      SOURCEURL="https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz"
+    ;;
+esac
 
 function set_loader() {
   if [[ -a $1 ]] && ! grep "go2dir.sh" $1 > /dev/null 2>&1; then
@@ -22,7 +36,7 @@ EOS
 
 # Placing source
 mkdir -p `dirname $SOURCEGO2DIR`
-curl -s -L "https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz" | tar -xzf - -C `dirname $SOURCEGO2DIR` --strip 1
+curl -s -L "$SOURCEURL" | tar -xzf - -C `dirname $SOURCEGO2DIR` --strip 1
 
 # Adding to load rc
 set_loader "$HOME/.bashrc"
