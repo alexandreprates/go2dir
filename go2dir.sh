@@ -15,9 +15,10 @@ function go2() {
   }
 
   function __find_location() {
-    cat $LOCATIONS2GO | while read line; do
-      local NAME=$(echo $line | cut -d '|' -f 1)
-      local LOCATION=$(echo $line | cut -d '|' -f 2)
+    local NAME LOCATION LINE
+    cat $LOCATIONS2GO | while read LINE; do
+      NAME=$(echo $LINE | cut -d '|' -f 1)
+      LOCATION=$(echo $LINE | cut -d '|' -f 2)
       if [ "$1" = "$NAME" ]; then
         echo $LOCATION
         break
@@ -78,11 +79,13 @@ function go2() {
   }
 
   function __list_dirs() {
-    local LINE
-    echo -e "Mapped dirs in $LOCATIONS2GO\n"
+    local NAME LOCATION LINE
+    echo -e "Current Locations\n"
     cat $LOCATIONS2GO | sort | while read LINE
     do
-      echo "  $LINE"
+      NAME=$(echo $LINE | cut -d '|' -f 1)
+      LOCATION=$(echo $LINE | cut -d '|' -f 2)
+      printf "%*s -> %s \n" 15  "$NAME" "$LOCATION"
     done
     echo ""
   }
