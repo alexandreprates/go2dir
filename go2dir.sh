@@ -15,9 +15,10 @@ function go2() {
   }
 
   function __find_location() {
-    cat $LOCATIONS2GO | while read line; do
-      local NAME=$(echo $line | cut -d '|' -f 1)
-      local LOCATION=$(echo $line | cut -d '|' -f 2)
+    local NAME LOCATION LINE
+    cat $LOCATIONS2GO | while read LINE; do
+      NAME=$(echo $LINE | cut -d '|' -f 1)
+      LOCATION=$(echo $LINE | cut -d '|' -f 2)
       if [ "$1" = "$NAME" ]; then
         echo $LOCATION
         break
@@ -26,24 +27,26 @@ function go2() {
   }
 
   function __not_mapped() {
-    local location=$(__find_location $1)
-    if [ -z "$location" ]; then
+    local LOCATION=$(__find_location $1)
+    if [ -z "$LOCATION" ]; then
       return 0
     fi
     return 1
   }
 
   function __alias_for_dir() {
-    local dirname=$(echo $1 | sed 's/[ ]/\-/g')
-    echo $(basename "$dirname")
+    local DIRNAME=$(echo $1 | sed 's/[ ]/\-/g')
+    echo $(basename "$DIRNAME")
   }
 
   function __add_dir() {
+    local NAME DIR
+
     if [ -z "$1" ]; then
       __echoerr "You must specify the dir to add"
       return 1
     else
-      local dir=$(__dir_pwd $1)
+      DIR=$(__dir_pwd $1)
     fi
 
     if [ ! -d "$1" ]; then
@@ -52,16 +55,16 @@ function go2() {
     fi
 
     if [ ! $2 ]; then
-      name=$(__alias_for_dir "$dir")
+      NAME=$(__alias_for_dir "$DIR")
     else
-      name=$2
+      NAME=$2
     fi
 
-    if __not_mapped "$name" ; then
-      echo "Mapping $name to $dir"
-      echo -e "$name|$dir" >> $LOCATIONS2GO
+    if __not_mapped "$NAME" ; then
+      echo "Mapping $NAME to $DIR"
+      echo -e "$NAME|$DIR" >> $LOCATIONS2GO
     else
-      __echoerr "$name is already mapped to $dir"
+      __echoerr "$NAME is already mapped to $DIR"
       return 1
     fi
   }
@@ -76,19 +79,22 @@ function go2() {
   }
 
   function __list_dirs() {
-    local line
-    echo -e "Mapped dirs in $LOCATIONS2GO\n"
-    cat $LOCATIONS2GO | sort | while read line
+    local NAME LOCATION LINE
+    echo -e "Current Locations\n"
+    cat $LOCATIONS2GO | sort | while read LINE
     do
-      echo "  $line"
+      NAME=$(echo $LINE | cut -d '|' -f 1)
+      LOCATION=$(echo $LINE | cut -d '|' -f 2)
+      printf "%*s -> %s \n" 15  "$NAME" "$LOCATION"
     done
     echo ""
   }
 
   function __recursive_add_dir() {
-    find $(pwd) -maxdepth 1 -type d | sort | while read line
+    local LINE
+    find $(pwd) -maxdepth 1 -type d | sort | while read LINE
     do
-      __add_dir $line $(basename $(pwd))-$(basename $line)
+      __add_dir $LINE $(basename $(pwd))-$(basename $LINE)
     done
   }
 
@@ -152,14 +158,14 @@ function go2() {
     __show_help
     return 0
   else
-    local location=$(__find_location $1)
+    local LOCATION=$(__find_location $1)
 
-    if [ -z "$location" ]; then
+    if [ -z "$LOCATION" ]; then
       __echoerr " Sorry, i didn't find $1"
       return 1
     else
-      echo "go to $1 at $location"
-      cd "$location"
+      echo "go to $1 at $LOCATION"
+      cd "$LOCATION"
     fi
   fi
 }
