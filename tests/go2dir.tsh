@@ -3,7 +3,7 @@ source go2dir.sh
 
 test go2 -l
 assert_success
-assert_stdout 'Mapped dirs in'
+assert_stdout 'Current Locations'
 
 mkdir -p /tmp/go2dir_test_site
 
@@ -17,7 +17,8 @@ assert_stderr "Dir does not exist"
 
 test go2 -l
 assert_success
-assert_stdout "test_site|/tmp/go2dir_test_site"
+assert_stdout "test_site"
+assert_stdout "/tmp/go2dir_test_site"
 
 test go2 unknow_named
 assert_fail 1
@@ -35,8 +36,8 @@ assert_success
 assert_stdout "test_site was successfully removed"
 
 test go2 -l
-assert_not_stdout "Mapping"
-assert_not_stdout "test_site|/tmp/go2dir_test_site"
+assert_not_stdout "test_site"
+assert_not_stdout "/tmp/go2dir_test_site"
 
 test go2 -R
 assert_fail 2
