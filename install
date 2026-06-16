@@ -6,6 +6,11 @@ echo "Preparing to install Go2Dir"
 SOURCEGO2DIR=$HOME/.go2dir/go2dir.sh
 LOCATIONS2GO=$HOME/.local/share/go2dir/locations.txt
 
+function fail_install() {
+  echo "Install failed: $1" >&2
+  exit 1
+}
+
 case $RELEASE in
     alpha)
       echo "Using alpha version!"
@@ -16,7 +21,9 @@ case $RELEASE in
       SOURCEURL="https://github.com/alexandreprates/go2dir/archive/dev.tar.gz"
     ;;
     *)
-      LAST_VERSION=$(curl -s -L -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest | cut -d \" -f 6)
+      LATEST_RELEASE=$(curl -fsSL -H 'Accept: application/json' https://github.com/alexandreprates/go2dir/releases/latest) || fail_install "could not fetch latest release metadata"
+      LAST_VERSION=$(echo "$LATEST_RELEASE" | cut -d \" -f 6)
+      [[ -z $LAST_VERSION ]] && fail_install "could not resolve latest release version"
       SOURCEURL="https://github.com/alexandreprates/go2dir/archive/$LAST_VERSION.tar.gz"
     ;;
 esac
@@ -36,7 +43,13 @@ EOS
 
 # Placing source
 mkdir -p `dirname $SOURCEGO2DIR`
-curl -s -L "$SOURCEURL" | tar -xzf - -C `dirname $SOURCEGO2DIR` --strip 1
+ARCHIVE=$(mktemp)
+trap 'rm -f "$ARCHIVE"' EXIT
+curl -fsSL "$SOURCEURL" -o "$ARCHIVE" || fail_install "could not download $SOURCEURL"
+tar -xzf "$ARCHIVE" -C `dirname $SOURCEGO2DIR` --strip 1 || fail_install "could not extract $SOURCEURL"
+rm -f "$ARCHIVE"
+trap - EXIT
+[[ ! -f $SOURCEGO2DIR ]] && fail_install "source file was not installed"
 
 # Adding to load rc
 set_loader "$HOME/.bashrc"
