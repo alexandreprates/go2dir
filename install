@@ -29,10 +29,12 @@ case $RELEASE in
 esac
 
 function set_loader() {
-  if [[ -a $1 ]] && ! grep "go2dir.sh" $1 > /dev/null 2>&1; then
-    cat <<-EOS >> $1
+  if [[ -a "$1" ]] && ! grep -F "### GO2DIR LOADER START ###" "$1" > /dev/null 2>&1; then
+    cat <<-EOS >> "$1"
+  ### GO2DIR LOADER START ###
   # Enable go2 command
-  [[ -a $SOURCEGO2DIR ]] && source $SOURCEGO2DIR
+  [[ -a "$SOURCEGO2DIR" ]] && source "$SOURCEGO2DIR"
+  ### GO2DIR LOADER END ###
 EOS
   fi
 }

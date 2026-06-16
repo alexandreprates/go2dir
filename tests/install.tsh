@@ -1,6 +1,7 @@
 # setup
 apk add --no-cache curl > /dev/null
-touch $HOME/.bashrc
+echo "# docs mention go2dir.sh but do not load it" > $HOME/.bashrc
+touch $HOME/.zshrc
 
 test bash install
 assert_success
@@ -10,7 +11,31 @@ assert_file "$HOME/.local/share/go2dir/locations.txt"
 
 test cat $HOME/.bashrc
 assert_success
-assert_stdout "source $HOME/.go2dir/go2dir.sh"
+assert_stdout "### GO2DIR LOADER START ###"
+assert_stdout "source \"$HOME/.go2dir/go2dir.sh\""
+assert_stdout "### GO2DIR LOADER END ###"
+
+test cat $HOME/.zshrc
+assert_success
+assert_stdout "### GO2DIR LOADER START ###"
+assert_stdout "source \"$HOME/.go2dir/go2dir.sh\""
+assert_stdout "### GO2DIR LOADER END ###"
+
+test bash install
+assert_success
+assert_stdout "Go2dir has been successfully installed"
+
+grep -F -c "### GO2DIR LOADER START ###" $HOME/.bashrc > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND='grep -F -c "### GO2DIR LOADER START ###" $HOME/.bashrc'
+assert_success
+assert_stdout "^1$"
+
+grep -F -c "### GO2DIR LOADER START ###" $HOME/.zshrc > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND='grep -F -c "### GO2DIR LOADER START ###" $HOME/.zshrc'
+assert_success
+assert_stdout "^1$"
 
 mkdir -p /tmp/go2dir_fakebin
 cat <<-EOS > /tmp/go2dir_fakebin/curl
