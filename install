@@ -40,18 +40,18 @@ EOS
 }
 
 # Creating locations
-[[ ! -d `dirname $LOCATIONS2GO` ]] && mkdir -p `dirname $LOCATIONS2GO`
-[[ ! -f $LOCATIONS2GO ]] && touch $LOCATIONS2GO
+[[ ! -d "$(dirname "$LOCATIONS2GO")" ]] && mkdir -p "$(dirname "$LOCATIONS2GO")"
+[[ ! -f "$LOCATIONS2GO" ]] && touch "$LOCATIONS2GO"
 
 # Placing source
-mkdir -p `dirname $SOURCEGO2DIR`
+mkdir -p "$(dirname "$SOURCEGO2DIR")"
 ARCHIVE=$(mktemp)
 trap 'rm -f "$ARCHIVE"' EXIT
 curl -fsSL "$SOURCEURL" -o "$ARCHIVE" || fail_install "could not download $SOURCEURL"
-tar -xzf "$ARCHIVE" -C `dirname $SOURCEGO2DIR` --strip 1 || fail_install "could not extract $SOURCEURL"
+tar -xzf "$ARCHIVE" -C "$(dirname "$SOURCEGO2DIR")" --strip 1 || fail_install "could not extract $SOURCEURL"
 rm -f "$ARCHIVE"
 trap - EXIT
-[[ ! -f $SOURCEGO2DIR ]] && fail_install "source file was not installed"
+[[ ! -f "$SOURCEGO2DIR" ]] && fail_install "source file was not installed"
 
 # Adding to load rc
 set_loader "$HOME/.bashrc"
@@ -69,4 +69,4 @@ while IFS= read -r LINE; do
 done < "$LOCATIONS2GO"
 mv "$LOCATIONS2GO.tmp" "$LOCATIONS2GO"
 
-echo -e "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!"
+printf "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!\n"

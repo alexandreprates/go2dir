@@ -9,7 +9,7 @@ function go2() {
   [ ! -e "$LOCATIONS2GO" ] && touch "$LOCATIONS2GO"
 
   function __echoerr() {
-    echo $@ >&2
+    printf "%s\n" "$*" >&2
   }
 
   function __current_version() {
@@ -51,7 +51,7 @@ function go2() {
 
   function __alias_for_dir() {
     local DIRNAME=$(printf "%s\n" "$1" | sed 's/[ ]/\-/g')
-    echo $(basename "$DIRNAME")
+    printf "%s\n" "$(basename "$DIRNAME")"
   }
 
   function __add_dir() {
@@ -98,12 +98,12 @@ function go2() {
 
   function __list_dirs() {
     local NAME LOCATION
-    echo -e "Current Locations\n"
+    printf "Current Locations\n\n"
     sort "$LOCATIONS2GO" | while IFS='|' read -r NAME LOCATION
     do
       printf "%*s -> %s \n" 15  "$NAME" "$LOCATION"
     done
-    echo ""
+    printf "\n"
   }
 
   function __recursive_add_dir() {
@@ -115,7 +115,7 @@ function go2() {
   }
 
   function __show_help() {
-    echo -e "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-v: Show version\n\t-h: Show this message\n"
+    printf "usage: go2 [options] [PATH] [NAME] \n\nCommand line options\n\t-a [PATH] [<NAME>]: Add the directory to list\n\t-r add all subdirs to list\n\t-l: Lists known directories\n\t-R <NAME>: Removes known directory by name\n\t-v: Show version\n\t-h: Show this message\n\n"
     return 0
   }
 

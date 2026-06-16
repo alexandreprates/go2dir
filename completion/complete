@@ -17,9 +17,5 @@ function _go2_completion() {
   return 0
 }
 
-function _load_zsh_completion() {
-  echo Load zsh completion
-}
-
 # Set autocomplete
 complete -o bashdefault -F _go2_completion go2

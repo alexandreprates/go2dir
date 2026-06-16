@@ -44,6 +44,16 @@ COMMAND='grep -F -c "### GO2DIR LOADER START ###" $HOME/.zshrc'
 assert_success
 assert_stdout "^1$"
 
+rm -rf "/tmp/go2dir install home"
+mkdir -p "/tmp/go2dir install home"
+HOME="/tmp/go2dir install home" bash install > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND='HOME="/tmp/go2dir install home" bash install'
+assert_success
+assert_stdout "Go2dir has been successfully installed"
+assert_file "/tmp/go2dir install home/.go2dir/go2dir.sh"
+assert_file "/tmp/go2dir install home/.local/share/go2dir/locations.txt"
+
 mkdir -p /tmp/go2dir_fakebin
 cat <<-EOS > /tmp/go2dir_fakebin/curl
 #!/usr/bin/env sh
