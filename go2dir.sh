@@ -8,10 +8,27 @@ function go2() {
   [ ! -d "$(dirname "$LOCATIONS2GO")" ] && mkdir -p "$(dirname "$LOCATIONS2GO")"
   [ ! -e "$LOCATIONS2GO" ] && touch "$LOCATIONS2GO"
 
-  local CURRENTVERSION=$(cat "$HOME/.go2dir/version.txt")
-
   function __echoerr() {
     echo $@ >&2
+  }
+
+  function __current_version() {
+    local VERSION_FILE="$HOME/.go2dir/version.txt"
+    local SOURCE_DIR
+
+    if [ -f "$VERSION_FILE" ]; then
+      cat "$VERSION_FILE"
+      return 0
+    fi
+
+    SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VERSION_FILE="$SOURCE_DIR/version.txt"
+    if [ -f "$VERSION_FILE" ]; then
+      cat "$VERSION_FILE"
+      return 0
+    fi
+
+    echo "unknown"
   }
 
   function __find_location() {
@@ -143,7 +160,7 @@ function go2() {
         return $?
         ;;
       v)
-        echo "go2dir version $CURRENTVERSION"
+        echo "go2dir version $(__current_version)"
         return 0
         ;;
       \?)

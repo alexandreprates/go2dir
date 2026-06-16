@@ -4,6 +4,19 @@ source go2dir.sh
 test go2 -l
 assert_success
 assert_stdout 'Current Locations'
+assert_not_stderr "version.txt"
+
+test go2 -v
+assert_success
+assert_stdout "go2dir version 2.4.0"
+assert_not_stderr "version.txt"
+
+mkdir -p "$HOME/.go2dir"
+printf "9.9.9\n" > "$HOME/.go2dir/version.txt"
+
+test go2 -v
+assert_success
+assert_stdout "go2dir version 9.9.9"
 
 mkdir -p /tmp/go2dir_test_site
 
