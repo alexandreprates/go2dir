@@ -8,8 +8,14 @@ before_install:
   - docker pull bash:latest
   - docker pull bash:4
   - docker pull bash:3
+  - docker pull zshusers/zsh:5.9
+  - docker pull zshusers/zsh:5.8.1
+  - docker pull zshusers/zsh:5.8
 
 script:
   - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:latest ./tests/tesht/tesht.sh './tests/*.tsh'"
   - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:4 ./tests/tesht/tesht.sh './tests/*.tsh'"
   - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` bash:3 ./tests/tesht/tesht.sh './tests/*.tsh'"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` zshusers/zsh:5.9 ./tests/zsh.zsh"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` zshusers/zsh:5.8.1 ./tests/zsh.zsh"
+  - "docker run -it --rm -v `pwd`:/`basename $(pwd)` -w /`basename $(pwd)` zshusers/zsh:5.8 ./tests/zsh.zsh"
