@@ -68,6 +68,37 @@ assert_not_stdout "/tmp/go2dir_regex_alias_a"
 assert_stdout "regexXalias"
 assert_stdout "/tmp/go2dir_regex_alias_b"
 
+mkdir -p /tmp/go2dir\ direct\ path
+
+go2 -a "/tmp/go2dir direct path" direct-spaced > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND='go2 -a "/tmp/go2dir direct path" direct-spaced'
+assert_success
+assert_stdout "Mapping direct-spaced to /tmp/go2dir direct path"
+
+cd
+go2 direct-spaced > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND="go2 direct-spaced"
+assert_success
+assert_stdout "go to direct-spaced at /tmp/go2dir direct path"
+assert_equal "$(pwd)" "/tmp/go2dir direct path"
+
+mkdir -p /tmp/go2dir\ recursive\ root/child\ one
+cd /tmp/go2dir\ recursive\ root
+
+test go2 -r
+assert_success
+assert_stdout "Mapping go2dir recursive root-child one to /tmp/go2dir recursive root/child one"
+
+cd
+go2 "go2dir recursive root-child one" > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND='go2 "go2dir recursive root-child one"'
+assert_success
+assert_stdout "go to go2dir recursive root-child one at /tmp/go2dir recursive root/child one"
+assert_equal "$(pwd)" "/tmp/go2dir recursive root/child one"
+
 mkdir -p /tmp/projects/foo\ bar
 cd /tmp/projects/foo\ bar
 
