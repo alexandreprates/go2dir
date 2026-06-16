@@ -29,7 +29,7 @@ cp -R completion "$HOME/.go2dir/completion"
 autoload -Uz compinit
 source "$HOME/.go2dir/go2dir.sh"
 
-assert_eq "go2dir version 2.4.0" "$(go2 -v)"
+assert_eq "go2dir version 2.5.0" "$(go2 -v)"
 assert_contains "usage: go2" "$(go2 -h)"
 
 [[ "$fpath[1]" == "$HOME/.go2dir/completion/compdef" ]] || fail "zsh completion directory was not prepended to fpath"

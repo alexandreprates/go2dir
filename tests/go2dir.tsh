@@ -8,7 +8,7 @@ assert_not_stderr "version.txt"
 
 test go2 -v
 assert_success
-assert_stdout "go2dir version 2.4.0"
+assert_stdout "go2dir version 2.5.0"
 assert_not_stderr "version.txt"
 
 mkdir -p "$HOME/.go2dir"
