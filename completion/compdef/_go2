@@ -3,7 +3,9 @@
 # Autocomple for **compdef** (zsh)
 
 function __location_list() {
-  cat "$LOCATIONS2GO" | cut -d '|' -f 1
+  while IFS='|' read -r NAME LOCATION; do
+    echo "$NAME"
+  done < "$LOCATIONS2GO"
 }
 
 local -a commands

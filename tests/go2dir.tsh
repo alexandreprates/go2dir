@@ -99,6 +99,46 @@ assert_success
 assert_stdout "go to go2dir recursive root-child one at /tmp/go2dir recursive root/child one"
 assert_equal "$(pwd)" "/tmp/go2dir recursive root/child one"
 
+mkdir -p '/tmp/go2dir\backslash'
+
+go2 -a '/tmp/go2dir\backslash' backslash-path > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND="go2 -a '/tmp/go2dir\\backslash' backslash-path"
+assert_success
+assert_stdout "Mapping backslash-path"
+
+cd
+test go2 backslash-path
+assert_success
+assert_stdout "go to backslash-path"
+[ "$(pwd)" = '/tmp/go2dir\backslash' ]
+RETURNCODE=$?
+COMMAND="test current directory is /tmp/go2dir\\backslash"
+assert_success
+
+mkdir -p '/tmp/go2dir|pipe'
+
+go2 -a '/tmp/go2dir|pipe' pipe-path > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND="go2 -a '/tmp/go2dir|pipe' pipe-path"
+assert_success
+assert_stdout "Mapping pipe-path"
+
+cd
+test go2 pipe-path
+assert_success
+assert_stdout "go to pipe-path"
+[ "$(pwd)" = '/tmp/go2dir|pipe' ]
+RETURNCODE=$?
+COMMAND="test current directory is /tmp/go2dir|pipe"
+assert_success
+
+go2 -a /tmp/go2dir_test_site 'bad|name' > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND="go2 -a /tmp/go2dir_test_site 'bad|name'"
+assert_fail 1
+assert_stderr "Name cannot contain |"
+
 mkdir -p /tmp/projects/foo\ bar
 cd /tmp/projects/foo\ bar
 

@@ -15,15 +15,13 @@ function go2() {
   }
 
   function __find_location() {
-    local NAME LOCATION LINE
-    cat "$LOCATIONS2GO" | while read LINE; do
-      NAME=$(echo "$LINE" | cut -d '|' -f 1)
-      LOCATION=$(echo "$LINE" | cut -d '|' -f 2)
+    local NAME LOCATION
+    while IFS='|' read -r NAME LOCATION; do
       if [ "$1" = "$NAME" ]; then
         echo "$LOCATION"
         break
       fi
-    done
+    done < "$LOCATIONS2GO"
   }
 
   function __not_mapped() {
@@ -35,7 +33,7 @@ function go2() {
   }
 
   function __alias_for_dir() {
-    local DIRNAME=$(echo "$1" | sed 's/[ ]/\-/g')
+    local DIRNAME=$(printf "%s\n" "$1" | sed 's/[ ]/\-/g')
     echo $(basename "$DIRNAME")
   }
 
@@ -58,9 +56,14 @@ function go2() {
       NAME="$2"
     fi
 
+    if [[ $NAME == *"|"* ]]; then
+      __echoerr "Name cannot contain |"
+      return 1
+    fi
+
     if __not_mapped "$NAME" ; then
       echo "Mapping $NAME to $DIR"
-      echo -e "$NAME|$DIR" >> "$LOCATIONS2GO"
+      printf "%s|%s\n" "$NAME" "$DIR" >> "$LOCATIONS2GO"
     else
       __echoerr "$NAME is already mapped to $DIR"
       return 1
@@ -77,12 +80,10 @@ function go2() {
   }
 
   function __list_dirs() {
-    local NAME LOCATION LINE
+    local NAME LOCATION
     echo -e "Current Locations\n"
-    cat "$LOCATIONS2GO" | sort | while read LINE
+    sort "$LOCATIONS2GO" | while IFS='|' read -r NAME LOCATION
     do
-      NAME=$(echo "$LINE" | cut -d '|' -f 1)
-      LOCATION=$(echo "$LINE" | cut -d '|' -f 2)
       printf "%*s -> %s \n" 15  "$NAME" "$LOCATION"
     done
     echo ""
@@ -90,7 +91,7 @@ function go2() {
 
   function __recursive_add_dir() {
     local LINE
-    find "$(pwd)" -maxdepth 1 -type d | sort | while read LINE
+    find "$(pwd)" -maxdepth 1 -type d | sort | while read -r LINE
     do
       __add_dir "$LINE" "$(basename "$(pwd)")-$(basename "$LINE")"
     done

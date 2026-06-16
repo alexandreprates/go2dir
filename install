@@ -58,15 +58,15 @@ set_loader "$HOME/.bashrc"
 set_loader "$HOME/.zshrc"
 
 # Migrating old locations to new format
-source $SOURCEGO2DIR
+source "$SOURCEGO2DIR"
 go2 -h > /dev/null # Load internal functions. I need this to use __alias_for_dir
-cat $LOCATIONS2GO | while read LINE; do
+while IFS= read -r LINE; do
   if [[ ! $LINE =~ \| ]]; then
-      echo "$(__alias_for_dir "$LINE")|$LINE" >> $LOCATIONS2GO.tmp
+      printf "%s|%s\n" "$(__alias_for_dir "$LINE")" "$LINE" >> "$LOCATIONS2GO.tmp"
   else
-      echo "$LINE" >> $LOCATIONS2GO.tmp
+      printf "%s\n" "$LINE" >> "$LOCATIONS2GO.tmp"
   fi
-done
-mv $LOCATIONS2GO.tmp $LOCATIONS2GO
+done < "$LOCATIONS2GO"
+mv "$LOCATIONS2GO.tmp" "$LOCATIONS2GO"
 
 echo -e "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!"

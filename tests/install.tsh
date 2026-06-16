@@ -2,12 +2,19 @@
 apk add --no-cache curl > /dev/null
 echo "# docs mention go2dir.sh but do not load it" > $HOME/.bashrc
 touch $HOME/.zshrc
+mkdir -p $HOME/.local/share/go2dir
+printf '%s\n' '/tmp/go2dir\legacy' > $HOME/.local/share/go2dir/locations.txt
 
 test bash install
 assert_success
 assert_stdout "Go2dir has been successfully installed"
 assert_file "$HOME/.go2dir/go2dir.sh"
 assert_file "$HOME/.local/share/go2dir/locations.txt"
+
+grep -F 'go2dir\legacy|/tmp/go2dir\legacy' $HOME/.local/share/go2dir/locations.txt > $STDOUT 2>$STDERR
+RETURNCODE=$?
+COMMAND="grep -F 'go2dir\\legacy|/tmp/go2dir\\legacy' $HOME/.local/share/go2dir/locations.txt"
+assert_success
 
 test cat $HOME/.bashrc
 assert_success
