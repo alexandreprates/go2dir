@@ -47,6 +47,27 @@ test go2 -R unknow_named
 assert_fail 3
 assert_stderr "unknow_named is not mapped"
 
+mkdir -p /tmp/go2dir_regex_alias_a
+mkdir -p /tmp/go2dir_regex_alias_b
+
+test go2 -a /tmp/go2dir_regex_alias_a 'regex.alias'
+assert_success
+assert_stdout "Mapping regex.alias to /tmp/go2dir_regex_alias_a"
+
+test go2 -a /tmp/go2dir_regex_alias_b regexXalias
+assert_success
+assert_stdout "Mapping regexXalias to /tmp/go2dir_regex_alias_b"
+
+test go2 -R 'regex.alias'
+assert_success
+assert_stdout "regex.alias was successfully removed"
+
+test go2 -l
+assert_success
+assert_not_stdout "/tmp/go2dir_regex_alias_a"
+assert_stdout "regexXalias"
+assert_stdout "/tmp/go2dir_regex_alias_b"
+
 mkdir -p /tmp/projects/foo\ bar
 cd /tmp/projects/foo\ bar
 

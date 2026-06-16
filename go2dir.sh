@@ -115,8 +115,8 @@ function go2() {
     fi
 
     local TEMP="$LOCATIONS2GO.tmp"
-    grep -vwE "${1}\|" $LOCATIONS2GO > $TEMP
-    mv $TEMP $LOCATIONS2GO
+    awk -F '|' -v NAME="$1" '$1 != NAME' "$LOCATIONS2GO" > "$TEMP"
+    mv "$TEMP" "$LOCATIONS2GO"
     echo "$1 was successfully removed"
   }
 
