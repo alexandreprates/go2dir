@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Bash latest
+            image: bash:latest
+            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+          - name: Bash 4
+            image: bash:4
+            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+          - name: Bash 3
+            image: bash:3
+            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+          - name: zsh 5.9
+            image: zshusers/zsh:5.9
+            command: ./tests/zsh.zsh
+          - name: zsh 5.8.1
+            image: zshusers/zsh:5.8.1
+            command: ./tests/zsh.zsh
+          - name: zsh 5.8
+            image: zshusers/zsh:5.8
+            command: ./tests/zsh.zsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Pull test image
+        run: docker pull "${{ matrix.image }}"
+
+      - name: Run tests
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            "${{ matrix.image }}" \
+            sh -c "${{ matrix.command }}"

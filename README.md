@@ -1,6 +1,6 @@
 # GO2DIR
 
-[![Build Status](https://travis-ci.org/alexandreprates/go2dir.svg?branch=dev)](https://travis-ci.org/alexandreprates/go2dir)
+[![Tests](https://github.com/alexandreprates/go2dir/actions/workflows/test.yml/badge.svg)](https://github.com/alexandreprates/go2dir/actions/workflows/test.yml)
 
 A simple way to go to your favorites directories
 
