@@ -17,7 +17,7 @@ done
 
 case "$url" in
   https://github.com/alexandreprates/go2dir/releases/latest)
-    printf '%s\n' '{"id": 1, "tag_name": "2.5.0"}'
+    printf '%s\n' '{"id": 1, "tag_name": "2.5.1"}'
     ;;
   https://github.com/alexandreprates/go2dir/archive/*.tar.gz)
     [ -n "$output" ] || exit 2
