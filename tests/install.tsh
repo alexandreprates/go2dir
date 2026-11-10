@@ -1,17 +1,18 @@
-# setup
-apk add --no-cache curl > /dev/null
-echo "# docs mention go2dir.sh but do not load it" > $HOME/.bashrc
+# Set up the installer fixtures.
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+[ -n "${GO2DIR_TEST_ROOT:-}" ] || { printf 'Run tests/run.sh for isolated installer fixtures.\n' >&2; exit 1; }
+echo "# Documentation mentions go2dir.sh without loading it." > $HOME/.bashrc
 touch $HOME/.zshrc
 mkdir -p $HOME/.local/share/go2dir
-printf '%s\n' '/tmp/go2dir\legacy' > $HOME/.local/share/go2dir/locations.txt
+printf '%s\n' "$GO2DIR_TEST_ROOT/go2dir\\legacy" > $HOME/.local/share/go2dir/locations.txt
 
 test bash install
 assert_success
-assert_stdout "Go2dir has been successfully installed"
+assert_stdout "go2dir has been successfully installed"
 assert_file "$HOME/.go2dir/go2dir.sh"
 assert_file "$HOME/.local/share/go2dir/locations.txt"
 
-grep -F 'go2dir\legacy|/tmp/go2dir\legacy' $HOME/.local/share/go2dir/locations.txt > $STDOUT 2>$STDERR
+grep -F "go2dir\\legacy|$GO2DIR_TEST_ROOT/go2dir\\legacy" $HOME/.local/share/go2dir/locations.txt > $STDOUT 2>$STDERR
 RETURNCODE=$?
 COMMAND="grep -F 'go2dir\\legacy|/tmp/go2dir\\legacy' $HOME/.local/share/go2dir/locations.txt"
 assert_success
@@ -19,18 +20,18 @@ assert_success
 test cat $HOME/.bashrc
 assert_success
 assert_stdout "### GO2DIR LOADER START ###"
-assert_stdout "source \"$HOME/.go2dir/go2dir.sh\""
+assert_stdout 'source "\$HOME/.go2dir/go2dir.sh"'
 assert_stdout "### GO2DIR LOADER END ###"
 
 test cat $HOME/.zshrc
 assert_success
 assert_stdout "### GO2DIR LOADER START ###"
-assert_stdout "source \"$HOME/.go2dir/go2dir.sh\""
+assert_stdout 'source "\$HOME/.go2dir/go2dir.sh"'
 assert_stdout "### GO2DIR LOADER END ###"
 
 test bash install
 assert_success
-assert_stdout "Go2dir has been successfully installed"
+assert_stdout "go2dir has been successfully installed"
 
 grep -F -c "### GO2DIR LOADER START ###" $HOME/.bashrc > $STDOUT 2>$STDERR
 RETURNCODE=$?
@@ -44,25 +45,25 @@ COMMAND='grep -F -c "### GO2DIR LOADER START ###" $HOME/.zshrc'
 assert_success
 assert_stdout "^1$"
 
-rm -rf "/tmp/go2dir install home"
-mkdir -p "/tmp/go2dir install home"
-HOME="/tmp/go2dir install home" bash install > $STDOUT 2>$STDERR
+rm -rf "${GO2DIR_TEST_ROOT}/install home"
+mkdir -p "${GO2DIR_TEST_ROOT}/install home"
+HOME="${GO2DIR_TEST_ROOT}/install home" bash install > $STDOUT 2>$STDERR
 RETURNCODE=$?
-COMMAND='HOME="/tmp/go2dir install home" bash install'
+COMMAND='HOME="${GO2DIR_TEST_ROOT}/install home" bash install'
 assert_success
-assert_stdout "Go2dir has been successfully installed"
-assert_file "/tmp/go2dir install home/.go2dir/go2dir.sh"
-assert_file "/tmp/go2dir install home/.local/share/go2dir/locations.txt"
+assert_stdout "go2dir has been successfully installed"
+assert_file "${GO2DIR_TEST_ROOT}/install home/.go2dir/go2dir.sh"
+assert_file "${GO2DIR_TEST_ROOT}/install home/.local/share/go2dir/locations.txt"
 
-mkdir -p /tmp/go2dir_fakebin
-cat <<-EOS > /tmp/go2dir_fakebin/curl
+mkdir -p ${GO2DIR_TEST_ROOT}/fakebin
+cat <<-EOS > ${GO2DIR_TEST_ROOT}/fakebin/curl
 #!/usr/bin/env sh
 exit 22
 EOS
-chmod +x /tmp/go2dir_fakebin/curl
-rm -rf /tmp/go2dir_failed_home
+chmod +x ${GO2DIR_TEST_ROOT}/fakebin/curl
+rm -rf ${GO2DIR_TEST_ROOT}/failed_home
 
-test env RELEASE=alpha PATH=/tmp/go2dir_fakebin:$PATH HOME=/tmp/go2dir_failed_home bash install
+test env RELEASE=alpha PATH=${GO2DIR_TEST_ROOT}/fakebin:$PATH HOME=${GO2DIR_TEST_ROOT}/failed_home bash install
 assert_fail 1
-assert_stderr "Install failed: could not download https://github.com/alexandreprates/go2dir/archive/master.tar.gz"
-assert_not_stdout "Go2dir has been successfully installed"
+assert_stderr "Installation failed: could not download https://github.com/alexandreprates/go2dir/archive/master.tar.gz"
+assert_not_stdout "go2dir has been successfully installed"

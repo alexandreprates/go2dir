@@ -1,26 +1,23 @@
 #compdef go2
 
-# Autocomple for **compdef** (zsh)
+# Complete literal directory aliases without interpreting description separators.
 
-function __location_list() {
-  while IFS='|' read -r NAME LOCATION; do
-    echo "$NAME"
+local go2_name go2_location
+local -a go2_aliases go2_options
+go2_aliases=()
+
+if [[ -f ${LOCATIONS2GO-} && -r ${LOCATIONS2GO-} ]]; then
+  while IFS='|' read -r go2_name go2_location || [[ -n $go2_name ]]; do
+    [[ -n $go2_name ]] && go2_aliases+=("$go2_name")
   done < "$LOCATIONS2GO"
-}
+fi
 
-local -a commands
-commands=(
-  $(__location_list)
-  '-a:add location to list.'
-  '-l:list locations'
-  '-r:add all subdirs to list.'
-  '-R:remove directory from list.'
-  '-v:show version'
-  '-h:Show help'
-)
-
-if (( CURRENT == 2 )); then
-  _describe -t commands 'commands' commands
+if (( CURRENT == 2 )) || { (( CURRENT == 3 )) && [[ $words[2] == -R || $words[2] == -- ]]; }; then
+  compadd -a go2_aliases
+  if (( CURRENT == 2 )); then
+    go2_options=(-a -l -r -R -v -h)
+    compadd -a go2_options
+  fi
 fi
 
 return 0

@@ -1,9 +1,10 @@
-# Load source
+# Load the runtime source.
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
 source go2dir.sh
 
 test go2 -l
 assert_success
-assert_stdout 'Current Locations'
+assert_stdout 'Current locations'
 assert_not_stderr "version.txt"
 
 test go2 -v
@@ -18,31 +19,31 @@ test go2 -v
 assert_success
 assert_stdout "go2dir version 9.9.9"
 
-mkdir -p /tmp/go2dir_test_site
+mkdir -p ${GO2DIR_TEST_ROOT}/go2dir_test_site
 
-test go2 -a /tmp/go2dir_test_site test_site
+test go2 -a ${GO2DIR_TEST_ROOT}/go2dir_test_site test_site
 assert_success
-assert_stdout "Mapping test_site to /tmp/go2dir_test_site"
+assert_stdout "Mapping test_site to ${GO2DIR_TEST_ROOT}/go2dir_test_site"
 
 test go2 -a wrong_dir_name ops
 assert_fail 1
-assert_stderr "Dir does not exist"
+assert_stderr "Directory does not exist"
 
 test go2 -l
 assert_success
 assert_stdout "test_site"
-assert_stdout "/tmp/go2dir_test_site"
+assert_stdout "${GO2DIR_TEST_ROOT}/go2dir_test_site"
 
-test go2 unknow_named
+test go2 unknown_name
 assert_fail 1
-assert_stderr "Sorry, i didn't find unknow_named"
+assert_stderr "Could not find a mapped directory named unknown_name"
 
-cd # Change current dir to user home
+cd # Change the current directory to the user's home directory.
 
 test go2 test_site
 assert_success
-assert_stdout "go to test_site at /tmp/go2dir_test_site"
-assert_equal "$(pwd)" "/tmp/go2dir_test_site"
+assert_stdout "Going to test_site at ${GO2DIR_TEST_ROOT}/go2dir_test_site"
+assert_equal "$(pwd)" "${GO2DIR_TEST_ROOT}/go2dir_test_site"
 
 test go2 -R test_site
 assert_success
@@ -50,26 +51,26 @@ assert_stdout "test_site was successfully removed"
 
 test go2 -l
 assert_not_stdout "test_site"
-assert_not_stdout "/tmp/go2dir_test_site"
+assert_not_stdout "${GO2DIR_TEST_ROOT}/go2dir_test_site"
 
 test go2 -R
 assert_fail 2
-assert_stderr "You must specify the named directory to remove"
+assert_stderr "You must specify the directory name to remove"
 
-test go2 -R unknow_named
+test go2 -R unknown_name
 assert_fail 3
-assert_stderr "unknow_named is not mapped"
+assert_stderr "unknown_name is not mapped"
 
-mkdir -p /tmp/go2dir_regex_alias_a
-mkdir -p /tmp/go2dir_regex_alias_b
+mkdir -p ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_a
+mkdir -p ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_b
 
-test go2 -a /tmp/go2dir_regex_alias_a 'regex.alias'
+test go2 -a ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_a 'regex.alias'
 assert_success
-assert_stdout "Mapping regex.alias to /tmp/go2dir_regex_alias_a"
+assert_stdout "Mapping regex.alias to ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_a"
 
-test go2 -a /tmp/go2dir_regex_alias_b regexXalias
+test go2 -a ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_b regexXalias
 assert_success
-assert_stdout "Mapping regexXalias to /tmp/go2dir_regex_alias_b"
+assert_stdout "Mapping regexXalias to ${GO2DIR_TEST_ROOT}/go2dir_regex_alias_b"
 
 test go2 -R 'regex.alias'
 assert_success
@@ -77,103 +78,103 @@ assert_stdout "regex.alias was successfully removed"
 
 test go2 -l
 assert_success
-assert_not_stdout "/tmp/go2dir_regex_alias_a"
+assert_not_stdout "${GO2DIR_TEST_ROOT}/go2dir_regex_alias_a"
 assert_stdout "regexXalias"
-assert_stdout "/tmp/go2dir_regex_alias_b"
+assert_stdout "${GO2DIR_TEST_ROOT}/go2dir_regex_alias_b"
 
-mkdir -p /tmp/go2dir\ direct\ path
+mkdir -p ${GO2DIR_TEST_ROOT}/go2dir\ direct\ path
 
-go2 -a "/tmp/go2dir direct path" direct-spaced > $STDOUT 2>$STDERR
+go2 -a "${GO2DIR_TEST_ROOT}/go2dir direct path" direct-spaced > $STDOUT 2>$STDERR
 RETURNCODE=$?
-COMMAND='go2 -a "/tmp/go2dir direct path" direct-spaced'
+COMMAND='go2 -a "${GO2DIR_TEST_ROOT}/go2dir direct path" direct-spaced'
 assert_success
-assert_stdout "Mapping direct-spaced to /tmp/go2dir direct path"
+assert_stdout "Mapping direct-spaced to ${GO2DIR_TEST_ROOT}/go2dir direct path"
 
 cd
 go2 direct-spaced > $STDOUT 2>$STDERR
 RETURNCODE=$?
 COMMAND="go2 direct-spaced"
 assert_success
-assert_stdout "go to direct-spaced at /tmp/go2dir direct path"
-assert_equal "$(pwd)" "/tmp/go2dir direct path"
+assert_stdout "Going to direct-spaced at ${GO2DIR_TEST_ROOT}/go2dir direct path"
+assert_equal "$(pwd)" "${GO2DIR_TEST_ROOT}/go2dir direct path"
 
-mkdir -p /tmp/go2dir\ recursive\ root/child\ one
-cd /tmp/go2dir\ recursive\ root
+mkdir -p ${GO2DIR_TEST_ROOT}/go2dir\ recursive\ root/child\ one
+cd ${GO2DIR_TEST_ROOT}/go2dir\ recursive\ root
 
 test go2 -r
 assert_success
-assert_stdout "Mapping go2dir recursive root-child one to /tmp/go2dir recursive root/child one"
+assert_stdout "Mapping go2dir recursive root-child one to ${GO2DIR_TEST_ROOT}/go2dir recursive root/child one"
 
 cd
 go2 "go2dir recursive root-child one" > $STDOUT 2>$STDERR
 RETURNCODE=$?
 COMMAND='go2 "go2dir recursive root-child one"'
 assert_success
-assert_stdout "go to go2dir recursive root-child one at /tmp/go2dir recursive root/child one"
-assert_equal "$(pwd)" "/tmp/go2dir recursive root/child one"
+assert_stdout "Going to go2dir recursive root-child one at ${GO2DIR_TEST_ROOT}/go2dir recursive root/child one"
+assert_equal "$(pwd)" "${GO2DIR_TEST_ROOT}/go2dir recursive root/child one"
 
-mkdir -p '/tmp/go2dir\backslash'
+mkdir -p "$GO2DIR_TEST_ROOT/go2dir\\backslash"
 
-go2 -a '/tmp/go2dir\backslash' backslash-path > $STDOUT 2>$STDERR
+go2 -a "$GO2DIR_TEST_ROOT/go2dir\\backslash" backslash-path > $STDOUT 2>$STDERR
 RETURNCODE=$?
-COMMAND="go2 -a '/tmp/go2dir\\backslash' backslash-path"
+COMMAND="go2 -a '${GO2DIR_TEST_ROOT}/go2dir\\backslash' backslash-path"
 assert_success
 assert_stdout "Mapping backslash-path"
 
 cd
 test go2 backslash-path
 assert_success
-assert_stdout "go to backslash-path"
-[ "$(pwd)" = '/tmp/go2dir\backslash' ]
+assert_stdout "Going to backslash-path"
+[ "$(pwd)" = "$GO2DIR_TEST_ROOT/go2dir\\backslash" ]
 RETURNCODE=$?
-COMMAND="test current directory is /tmp/go2dir\\backslash"
+COMMAND="test current directory is ${GO2DIR_TEST_ROOT}/go2dir\\backslash"
 assert_success
 
-mkdir -p '/tmp/go2dir|pipe'
+mkdir -p "$GO2DIR_TEST_ROOT/go2dir|pipe"
 
-go2 -a '/tmp/go2dir|pipe' pipe-path > $STDOUT 2>$STDERR
+go2 -a "$GO2DIR_TEST_ROOT/go2dir|pipe" pipe-path > $STDOUT 2>$STDERR
 RETURNCODE=$?
-COMMAND="go2 -a '/tmp/go2dir|pipe' pipe-path"
+COMMAND='go2 -a quoted-pipe-path pipe-path'
 assert_success
 assert_stdout "Mapping pipe-path"
 
 cd
 test go2 pipe-path
 assert_success
-assert_stdout "go to pipe-path"
-[ "$(pwd)" = '/tmp/go2dir|pipe' ]
+assert_stdout "Going to pipe-path"
+[ "$(pwd)" = "$GO2DIR_TEST_ROOT/go2dir|pipe" ]
 RETURNCODE=$?
-COMMAND="test current directory is /tmp/go2dir|pipe"
+COMMAND="test current directory is ${GO2DIR_TEST_ROOT}/go2dir|pipe"
 assert_success
 
-go2 -a /tmp/go2dir_test_site 'bad|name' > $STDOUT 2>$STDERR
+go2 -a ${GO2DIR_TEST_ROOT}/go2dir_test_site 'bad|name' > $STDOUT 2>$STDERR
 RETURNCODE=$?
-COMMAND="go2 -a /tmp/go2dir_test_site 'bad|name'"
+COMMAND="go2 -a ${GO2DIR_TEST_ROOT}/go2dir_test_site 'bad|name'"
 assert_fail 1
 assert_stderr "Name cannot contain |"
 
-mkdir -p /tmp/projects/foo\ bar
-cd /tmp/projects/foo\ bar
+mkdir -p ${GO2DIR_TEST_ROOT}/projects/foo\ bar
+cd ${GO2DIR_TEST_ROOT}/projects/foo\ bar
 
 test go2 -a .
 assert_success
-assert_stdout "Mapping foo-bar to /tmp/projects/foo bar"
+assert_stdout "Mapping foo-bar to ${GO2DIR_TEST_ROOT}/projects/foo bar"
 
 cd
 
 test go2 foo-bar
 assert_success
-assert_stdout "go to foo-bar at /tmp/projects/foo bar"
-assert_equal "$(pwd)" "/tmp/projects/foo bar"
+assert_stdout "Going to foo-bar at ${GO2DIR_TEST_ROOT}/projects/foo bar"
+assert_equal "$(pwd)" "${GO2DIR_TEST_ROOT}/projects/foo bar"
 
-mkdir -p /tmp/projects/sources
+mkdir -p ${GO2DIR_TEST_ROOT}/projects/sources
 
-test go2 -a /tmp/projects/sources
+test go2 -a ${GO2DIR_TEST_ROOT}/projects/sources
 assert_success
-assert_stdout "Mapping sources to /tmp/projects/sources"
+assert_stdout "Mapping sources to ${GO2DIR_TEST_ROOT}/projects/sources"
 
 cd
 test go2 sources
 assert_success
-assert_stdout "go to sources at /tmp/projects/sources"
-assert_equal "$(pwd)" "/tmp/projects/sources"
+assert_stdout "Going to sources at ${GO2DIR_TEST_ROOT}/projects/sources"
+assert_equal "$(pwd)" "${GO2DIR_TEST_ROOT}/projects/sources"

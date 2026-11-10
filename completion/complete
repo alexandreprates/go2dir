@@ -1,21 +1,84 @@
-# Autocomple for **complete** (bash)
+# Bash completion for literal directory aliases.
 
 function _go2_completion() {
-  function __location_list() {
-    while IFS='|' read -r NAME LOCATION; do
-      echo "$NAME"
-    done < "$LOCATIONS2GO"
-  }
+  local line word='' previous='' quote='' character name _location candidate trim=''
+  local index argument=0 started=0 escaped=0 reply_index=0 replacement_start=-1
+  COMPREPLY=()
 
-  COMPREPLY=();
-  local word="${COMP_WORDS[COMP_CWORD]}";
-  if [ "$COMP_CWORD" -eq 1 ]; then
-    COMPREPLY=($(compgen -W "$(__location_list)" -- "$word"));
-  else
-    COMPREPLY=
+  # Decode the current shell word without evaluating expansions or substitutions.
+  line=${COMP_LINE:0:COMP_POINT}
+  # Bash passes the exact fragment Readline will replace as the second argument.
+  if [ "$#" -ge 2 ]; then
+    replacement_start=$((${#line} - ${#2}))
   fi
+  for ((index = 0; index < ${#line}; index++)); do
+    if [ "$index" -eq "$replacement_start" ]; then trim=$word; fi
+    character=${line:index:1}
+    if [ "$escaped" -eq 1 ]; then
+      if [ "$quote" = '"' ] && [[ $character != [\$\`\"\\] ]]; then
+        word=$word\\
+      fi
+      word=$word$character
+      escaped=0
+    elif [ "$quote" = "'" ]; then
+      if [ "$character" = "'" ]; then quote=; else word=$word$character; fi
+    elif [ "$quote" = '"' ]; then
+      case $character in
+        '"') quote= ;;
+        \\) escaped=1 ;;
+        *) word=$word$character ;;
+      esac
+    else
+      case $character in
+        \\) escaped=1; started=1 ;;
+        "'"|'"') quote=$character; started=1 ;;
+        ' '|$'\t')
+          if [ "$started" -eq 1 ]; then
+            previous=$word
+            argument=$((argument + 1))
+            word=
+            trim=
+            started=0
+          fi
+          ;;
+        ';'|'|'|'&') word=; previous=; trim=; argument=0; started=0 ;;
+        *)
+          # Support direct calls too; Readline keeps a word-breaking @ in its fragment.
+          if [ "$replacement_start" -lt 0 ] && [[ $COMP_WORDBREAKS = *"$character"* ]]; then
+            trim=$word
+            if [ "$character" != @ ]; then trim=$trim$character; fi
+          fi
+          word=$word$character
+          started=1
+          ;;
+      esac
+    fi
+  done
+  if [ "$replacement_start" -eq "${#line}" ]; then trim=$word; fi
+
+  if [ "$argument" -ne 1 ] && ! { [ "$argument" -eq 2 ] && [[ $previous = -R || $previous = -- ]]; }; then
+    return 0
+  fi
+  [[ -f ${LOCATIONS2GO-} && -r ${LOCATIONS2GO-} ]] || return 0
+
+  while IFS='|' read -r name _location || [ -n "$name" ]; do
+    [[ -n $name && $name = "$word"* ]] || continue
+    candidate=${name#"$trim"}
+    case $quote in
+      "'") candidate=${candidate//\'/\'\\\'\'} ;;
+      '"')
+        candidate=${candidate//\\/\\\\}
+        candidate=${candidate//\"/\\\"}
+        candidate=${candidate//\$/\\\$}
+        candidate=${candidate//\`/\\\`}
+        ;;
+      *) printf -v candidate '%q' "$candidate" ;;
+    esac
+    COMPREPLY[reply_index]=$candidate
+    reply_index=$((reply_index + 1))
+  done < "$LOCATIONS2GO"
   return 0
 }
 
-# Set autocomplete
-complete -o bashdefault -F _go2_completion go2
+# Candidates are shell-quoted explicitly because aliases are not filenames.
+complete -F _go2_completion go2

@@ -1,0 +1,406 @@
+# Runtime and installer regressions, reported by teSHt.
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+
+TEST_REPO=$GO2DIR_TEST_REPO
+TEST_ROOT="$GO2DIR_TEST_ROOT/regressions"
+mkdir -p "$TEST_ROOT/target"
+ORIGINAL_PATH=$PATH
+source "$TEST_REPO/go2dir.sh"
+set -u
+
+function new_database() {
+  LOCATIONS2GO="$TEST_ROOT/$1/locations.txt"
+  mkdir -p "$(dirname "$LOCATIONS2GO")"
+  : > "$LOCATIONS2GO"
+}
+
+function failing_tool() {
+  mkdir -p "$TEST_ROOT/failbin"
+  printf '#!/bin/sh\nexit 2\n' > "$TEST_ROOT/failbin/$1"
+  chmod +x "$TEST_ROOT/failbin/$1"
+  PATH="$TEST_ROOT/failbin:$ORIGINAL_PATH"
+}
+
+# R2-01: preserve every path character after the record's first delimiter.
+for suffix in '|' '||' '|\literal|'; do
+  new_database terminal-pipe
+  PIPE_TARGET="$TEST_ROOT/terminal-pipe/target$suffix"
+  mkdir -p "$TEST_ROOT/terminal-pipe/target" "$PIPE_TARGET"
+  test go2 -a "$PIPE_TARGET" terminal-pipe
+  assert_success
+  test [ "$(cat "$LOCATIONS2GO")" = "terminal-pipe|$PIPE_TARGET" ]
+  assert_success
+  test go2 terminal-pipe
+  assert_success
+  test [ "$PWD" = "$PIPE_TARGET" ]
+  assert_success
+  test go2 -l
+  assert_success
+  test [ "$(cat "$STDOUT")" = "$(printf 'Current locations\n\n%*s -> %s ' 15 terminal-pipe "$PIPE_TARGET")" ]
+  assert_success
+  cd "$TEST_REPO" || exit 1
+done
+
+# R2-02: follow the starting directory link, not symlinked children.
+new_database linked-root
+mkdir -p "$TEST_ROOT/physical/child" "$TEST_ROOT/outside"
+ln -s "$TEST_ROOT/physical" "$TEST_ROOT/linked"
+ln -s "$TEST_ROOT/outside" "$TEST_ROOT/physical/child-link"
+cd "$TEST_ROOT/linked" || exit 1
+test go2 -r
+assert_success
+test grep -Fx "linked-linked|$TEST_ROOT/linked" "$LOCATIONS2GO"
+assert_success
+test grep -Fx "linked-child|$TEST_ROOT/linked/child" "$LOCATIONS2GO"
+assert_success
+test grep -F 'linked-child-link|' "$LOCATIONS2GO"
+assert_fail 1
+test [ "$(wc -l < "$LOCATIONS2GO" | tr -d ' ')" = 2 ]
+assert_success
+test go2 linked-child
+assert_success
+test [ "$PWD" = "$TEST_ROOT/linked/child" ]
+assert_success
+cd "$TEST_REPO" || exit 1
+
+# F02: equality must preserve numeric-looking names and literal backslashes.
+new_database literal
+for name in 01 1 1.0 'a\nb'; do
+  test go2 -a "$TEST_ROOT/target" "$name"
+  assert_success
+done
+test go2 -R 01
+assert_success
+test grep -F '01|' "$LOCATIONS2GO"
+assert_fail 1
+test grep -F "1|$TEST_ROOT/target" "$LOCATIONS2GO"
+assert_success
+test grep -F "1.0|$TEST_ROOT/target" "$LOCATIONS2GO"
+assert_success
+test go2 -R 'a\nb'
+assert_success
+test grep -F 'a\nb|' "$LOCATIONS2GO"
+assert_fail 1
+
+# F03: filtering and replacement failures must leave the database intact.
+for tool in awk mv; do
+  new_database "failed-$tool"
+  test go2 -a "$TEST_ROOT/target" retained
+  assert_success
+  cp "$LOCATIONS2GO" "$TEST_ROOT/before"
+  failing_tool "$tool"
+  test go2 -R retained
+  assert_fail 1
+  cp "$STDOUT" "$TEST_ROOT/failed-remove-$tool.stdout"
+  PATH=$ORIGINAL_PATH
+  rm -f "$TEST_ROOT/failbin/$tool"
+  test cmp "$TEST_ROOT/before" "$LOCATIONS2GO"
+  assert_success
+  test grep -F 'successfully removed' "$TEST_ROOT/failed-remove-$tool.stdout"
+  assert_fail 1
+  test [ -d "$LOCATIONS2GO.lock" ]
+  assert_fail 1
+done
+new_database failed-add
+test go2 -a "$TEST_ROOT/target" retained
+assert_success
+cp "$LOCATIONS2GO" "$TEST_ROOT/before-add"
+failing_tool awk
+test go2 -a "$TEST_ROOT/target" rejected
+assert_fail 1
+PATH=$ORIGINAL_PATH
+rm -f "$TEST_ROOT/failbin/awk"
+test cmp "$TEST_ROOT/before-add" "$LOCATIONS2GO"
+assert_success
+
+# F04: successful concurrent writers must not overwrite each other's records.
+new_database concurrent
+pids=
+i=1
+while [ "$i" -le 12 ]; do
+  go2 -a "$TEST_ROOT/target" "worker-$i" > "$TEST_ROOT/worker-$i.out" 2> "$TEST_ROOT/worker-$i.err" &
+  pids="$pids $!"
+  i=$((i + 1))
+done
+for pid in $pids; do
+  test wait "$pid"
+  assert_success
+done
+i=1
+while [ "$i" -le 12 ]; do
+  test grep -F "worker-$i|" "$LOCATIONS2GO"
+  assert_success
+  i=$((i + 1))
+done
+pids=
+i=1
+while [ "$i" -le 6 ]; do
+  go2 -R "worker-$i" > "$TEST_ROOT/remove-$i.out" 2> "$TEST_ROOT/remove-$i.err" &
+  pids="$pids $!"
+  i=$((i + 1))
+done
+for pid in $pids; do
+  test wait "$pid"
+  assert_success
+done
+# concurrent removal count.
+test [ 6 = "$(wc -l < "$LOCATIONS2GO" | tr -d ' ')" ]
+assert_success
+test [ -d "$LOCATIONS2GO.lock" ]
+assert_fail 1
+
+pids=
+i=7
+while [ "$i" -le 12 ]; do
+  go2 -R "worker-$i" > "$TEST_ROOT/mixed-remove-$i.out" 2> "$TEST_ROOT/mixed-remove-$i.err" &
+  pids="$pids $!"
+  go2 -a "$TEST_ROOT/target" "new-worker-$i" > "$TEST_ROOT/mixed-add-$i.out" 2> "$TEST_ROOT/mixed-add-$i.err" &
+  pids="$pids $!"
+  i=$((i + 1))
+done
+for pid in $pids; do
+  test wait "$pid"
+  assert_success
+done
+# mixed concurrent mutation count.
+test [ 6 = "$(wc -l < "$LOCATIONS2GO" | tr -d ' ')" ]
+assert_success
+i=7
+while [ "$i" -le 12 ]; do
+  test grep -F "new-worker-$i|" "$LOCATIONS2GO"
+  assert_success
+  i=$((i + 1))
+done
+
+# F07: CDPATH, failed cd and leading hyphens must not change path resolution.
+new_database paths
+mkdir -p "$TEST_ROOT/paths/local/child" "$TEST_ROOT/paths/other/child" "$TEST_ROOT/paths/local/-child"
+cd "$TEST_ROOT/paths/local" || exit 1
+CDPATH="$TEST_ROOT/paths/other"
+test go2 -a child local-child
+assert_success
+# CDPATH isolation.
+test [ "local-child|$TEST_ROOT/paths/local/child" = "$(cat "$LOCATIONS2GO")" ]
+assert_success
+test go2 -a -child hyphen-child
+assert_success
+test go2 hyphen-child
+assert_success
+# leading-hyphen path.
+test [ "$TEST_ROOT/paths/local/-child" = "$PWD" ]
+assert_success
+unset CDPATH
+cd "$TEST_REPO" || exit 1
+
+# F09: reject line separators before mutating the line-based database.
+new_database newline
+newline=$'\n'
+mkdir -p "$TEST_ROOT/target${newline}second"
+test go2 -a "$TEST_ROOT/target" "bad${newline}name"
+assert_fail 1
+test go2 -a "$TEST_ROOT/target${newline}second" bad-path
+assert_fail 1
+# newline input leaves database empty.
+test [ '' = "$(cat "$LOCATIONS2GO")" ]
+assert_success
+mkdir -p "$TEST_ROOT/trailing-newline" "$TEST_ROOT/trailing-newline$newline"
+cd "$TEST_ROOT/trailing-newline$newline" || exit 1
+test go2 -a . bad-relative-path
+assert_fail 1
+# resolved trailing newline leaves database empty.
+test [ '' = "$(cat "$LOCATIONS2GO")" ]
+assert_success
+cd "$TEST_REPO" || exit 1
+
+# F11: batch enumeration preserves whitespace and reports partial failures.
+new_database recursive
+mkdir -p "$TEST_ROOT/batch/child "
+cd "$TEST_ROOT/batch" || exit 1
+test go2 -r
+assert_success
+test grep -F "batch-child |$TEST_ROOT/batch/child " "$LOCATIONS2GO"
+assert_success
+test go2 -r
+assert_fail 1
+cd "$TEST_REPO" || exit 1
+
+# F13-F15: optional arguments, -- and source-relative versions remain usable.
+new_database options
+test go2
+assert_success
+test go2 -a
+assert_fail 1
+test go2 -a "$TEST_ROOT/target"
+assert_success
+test go2 -R
+assert_fail 2
+test go2 -a "$TEST_ROOT/target" --dash
+assert_success
+test go2 -- --dash
+assert_success
+# leading-hyphen alias navigation.
+test [ "$TEST_ROOT/target" = "$PWD" ]
+assert_success
+cd "$TEST_REPO" || exit 1
+mkdir -p "$TEST_ROOT/version-home"
+test env HOME="$TEST_ROOT/version-home" bash -uc 'source ./go2dir.sh; cd /; [ "$(go2 -v)" = "go2dir version $(cat "$GO2DIR_TEST_REPO/version.txt")" ]'
+assert_success
+
+# F01/F10: completion treats stored names as inert, indivisible values.
+new_database completion
+source "$TEST_REPO/completion/complete"
+payload='$(touch "$GO2DIR_TEST_ROOT/completion-executed")'
+for name in "$payload" 'two words' '*' 'colon:name'; do
+  test go2 -a "$TEST_ROOT/target" "$name"
+  assert_success
+done
+COMP_WORDS=(go2 '')
+COMP_CWORD=1
+COMP_LINE='go2 '
+COMP_POINT=${#COMP_LINE}
+test _go2_completion
+assert_success
+test [ -e "$GO2DIR_TEST_ROOT/completion-executed" ]
+assert_fail 1
+# literal completion candidate count.
+test [ 4 = "${#COMPREPLY[@]}" ]
+assert_success
+# command substitution remains literal.
+test [ "$(printf '%q' "$payload")" = "${COMPREPLY[0]-}" ]
+assert_success
+# spaced completion alias.
+test [ "$(printf '%q' 'two words')" = "${COMPREPLY[1]-}" ]
+assert_success
+# glob completion alias.
+test [ "$(printf '%q' '*')" = "${COMPREPLY[2]-}" ]
+assert_success
+# colon completion alias.
+test [ "$(printf '%q' 'colon:name')" = "${COMPREPLY[3]-}" ]
+assert_success
+
+for name in team=dev team@dev team:dev; do
+  test go2 -a "$TEST_ROOT/target" "$name"
+  assert_success
+done
+for prefix in team=de team= team@de team@ team:de team:; do
+  COMP_LINE="go2 $prefix"
+  COMP_POINT=${#COMP_LINE}
+  test _go2_completion
+  assert_success
+  case "$prefix" in
+    *@*) expected_reply='@dev' ;;
+    *) expected_reply=dev ;;
+  esac
+  # word-break completion candidate count.
+  test [ 1 = "${#COMPREPLY[@]}" ]
+  assert_success
+  # word-break completion for $prefix.
+  test [ "$expected_reply" = "${COMPREPLY[0]-}" ]
+  assert_success
+done
+
+# F05/F06/F12/F16: installer uses the worktree fixture and safe migration/loaders.
+install_home="$TEST_ROOT/install-home"
+mkdir -p "$install_home/.local/share/go2dir"
+printf 'first|/tmp/first\nlast|/tmp/last' > "$install_home/.local/share/go2dir/locations.txt"
+printf 'stale|/tmp/stale\n' > "$install_home/.local/share/go2dir/locations.txt.tmp"
+test env HOME="$install_home" bash "$TEST_REPO/install"
+assert_success
+# migration has no errors.
+test [ '' = "$(cat "$STDERR")" ]
+assert_success
+# unterminated record and stale temp.
+test [ $'first|/tmp/first\nlast|/tmp/last' = "$(cat "$install_home/.local/share/go2dir/locations.txt")" ]
+assert_success
+test cmp "$TEST_REPO/go2dir.sh" "$install_home/.go2dir/go2dir.sh"
+assert_success
+test cmp "$TEST_REPO/completion/complete" "$install_home/.go2dir/completion/complete"
+assert_success
+empty_home="$TEST_ROOT/empty-home"
+mkdir -p "$empty_home"
+test env HOME="$empty_home" bash "$TEST_REPO/install"
+assert_success
+# empty migration has no errors.
+test [ '' = "$(cat "$STDERR")" ]
+assert_success
+test [ -f "$empty_home/.local/share/go2dir/locations.txt" ]
+assert_success
+test env HOME="$empty_home" bash "$TEST_REPO/install"
+assert_success
+# empty reinstall has no errors.
+test [ '' = "$(cat "$STDERR")" ]
+assert_success
+cp "$install_home/.local/share/go2dir/locations.txt" "$TEST_ROOT/before-install"
+failing_tool mv
+test env HOME="$install_home" bash "$TEST_REPO/install"
+assert_fail 1
+PATH=$ORIGINAL_PATH
+rm -f "$TEST_ROOT/failbin/mv"
+test cmp "$TEST_ROOT/before-install" "$install_home/.local/share/go2dir/locations.txt"
+assert_success
+test [ -d "$install_home/.local/share/go2dir/locations.txt.lock" ]
+assert_fail 1
+
+# Exercise permission errors when running as an unprivileged user (as in CI).
+chmod 000 "$install_home/.local/share/go2dir/locations.txt"
+if [ ! -r "$install_home/.local/share/go2dir/locations.txt" ]; then
+  test env HOME="$install_home" bash "$TEST_REPO/install"
+  assert_fail 1
+  chmod 600 "$install_home/.local/share/go2dir/locations.txt"
+  test cmp "$TEST_ROOT/before-install" "$install_home/.local/share/go2dir/locations.txt"
+  assert_success
+  test [ -d "$install_home/.local/share/go2dir/locations.txt.lock" ]
+  assert_fail 1
+else
+  chmod 600 "$install_home/.local/share/go2dir/locations.txt"
+fi
+
+special_home="$TEST_ROOT/"'home$unset_variable'
+mkdir -p "$special_home"
+: > "$special_home/.bashrc"
+test env HOME="$special_home" bash "$TEST_REPO/install"
+assert_success
+test env HOME="$special_home" bash -uc 'source "$HOME/.bashrc"; type go2 > /dev/null'
+assert_success
+
+# Hold migration at replacement while another shell attempts an addition.
+pause_dir="$TEST_ROOT/migration-pause"
+mkdir -p "$pause_dir/bin"
+cat > "$pause_dir/bin/mv" <<'EOF'
+#!/bin/sh
+touch "$GO2DIR_TEST_PAUSE_DIR/ready"
+attempt=0
+while [ ! -f "$GO2DIR_TEST_PAUSE_DIR/release" ]; do
+  [ "$attempt" -lt 100 ] || exit 1
+  sleep 0.05
+  attempt=$((attempt + 1))
+done
+exec "$GO2DIR_TEST_REAL_MV" "$@"
+EOF
+chmod +x "$pause_dir/bin/mv"
+env HOME="$install_home" PATH="$pause_dir/bin:$ORIGINAL_PATH" \
+  GO2DIR_TEST_PAUSE_DIR="$pause_dir" GO2DIR_TEST_REAL_MV="$(command -v mv)" \
+  bash "$TEST_REPO/install" > "$pause_dir/install.out" 2> "$pause_dir/install.err" &
+migration_pid=$!
+attempt=0
+while [ ! -f "$pause_dir/ready" ] && [ "$attempt" -lt 100 ]; do
+  sleep 0.05
+  attempt=$((attempt + 1))
+done
+test [ -f "$pause_dir/ready" ]
+assert_success
+LOCATIONS2GO="$install_home/.local/share/go2dir/locations.txt"
+go2 -a "$TEST_ROOT/target" during-migration > "$pause_dir/add.out" 2> "$pause_dir/add.err" &
+writer_pid=$!
+sleep 0.2
+touch "$pause_dir/release"
+test wait "$migration_pid"
+assert_success
+test wait "$writer_pid"
+assert_success
+test grep -F "during-migration|$TEST_ROOT/target" "$LOCATIONS2GO"
+assert_success
+
+
+# Restore the runner options after exercising nounset.
+set +u

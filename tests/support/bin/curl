@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+
+# Installer integration always receives the current worktree fixture, never the network.
+if [ "${GO2DIR_TEST_CURL_FAIL:-0}" = 1 ]; then
+  exit 22
+fi
+
+output=
+url=
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o) shift; output=$1 ;;
+    https://*) url=$1 ;;
+  esac
+  shift
+done
+
+case "$url" in
+  https://github.com/alexandreprates/go2dir/releases/latest)
+    printf '%s\n' '{"id": 1, "tag_name": "2.5.0"}'
+    ;;
+  https://github.com/alexandreprates/go2dir/archive/*.tar.gz)
+    [ -n "$output" ] || exit 2
+    cp "$GO2DIR_TEST_ARCHIVE" "$output"
+    ;;
+  *)
+    printf 'Unexpected test download URL: %s\n' "$url" >&2
+    exit 2
+    ;;
+esac

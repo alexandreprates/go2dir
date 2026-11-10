@@ -1,0 +1,163 @@
+# teSHt owns all assertions; the actual zsh interpreter runs the shell probes.
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+
+TEST_REPO=$GO2DIR_TEST_REPO
+TEST_ROOT="$GO2DIR_TEST_ROOT/zsh"
+ZSH_TEST_HOME="$TEST_ROOT/home"
+TARGET="$TEST_ROOT/go2dir zsh target"
+mkdir -p "$ZSH_TEST_HOME/.go2dir" "$TARGET"
+cp "$TEST_REPO/go2dir.sh" "$TEST_REPO/version.txt" "$ZSH_TEST_HOME/.go2dir/"
+cp -R "$TEST_REPO/completion" "$ZSH_TEST_HOME/.go2dir/completion"
+
+# The script argument is fixed test code; dynamic values are positional arguments.
+function zsh_session() {
+  local SCRIPT="$1"
+  shift
+  env HOME="$ZSH_TEST_HOME" zsh -uc '
+    autoload -Uz compinit
+    source "$HOME/.go2dir/go2dir.sh"
+  '"$SCRIPT" -- "$@"
+}
+
+test zsh_session 'go2 -v'
+assert_success
+test [ "$(cat "$STDOUT")" = "go2dir version $(cat "$TEST_REPO/version.txt")" ]
+assert_success
+
+test zsh_session 'go2 -h'
+assert_success
+assert_stdout '^Usage: go2'
+
+test zsh_session 'printf "%s\n" "$fpath[1]"'
+assert_success
+test [ "$(cat "$STDOUT")" = "$ZSH_TEST_HOME/.go2dir/completion/compdef" ]
+assert_success
+
+test zsh_session 'whence -w _go2'
+assert_success
+
+test zsh_session 'go2 -a "$1" zsh-target' "$TARGET"
+assert_success
+test [ "$(cat "$STDOUT")" = "Mapping zsh-target to $TARGET" ]
+assert_success
+
+test zsh_session 'go2 -l'
+assert_success
+assert_stdout 'zsh-target'
+
+test zsh_session '
+  cd / && go2 zsh-target && printf "%s\n" "$PWD"
+'
+assert_success
+test [ "$(cat "$STDOUT")" = "$(printf 'Going to zsh-target at %s\n%s' "$TARGET" "$TARGET")" ]
+assert_success
+
+test zsh_session 'go2 -R zsh-target'
+assert_success
+assert_stdout '^zsh-target was successfully removed$'
+
+# Terminal delimiters remain part of the path in every supported shell.
+PIPE_TARGET="$TEST_ROOT/target|"
+mkdir -p "$TEST_ROOT/target" "$PIPE_TARGET"
+test zsh_session '
+  go2 -a "$1" terminal-pipe > /dev/null &&
+  go2 terminal-pipe > /dev/null &&
+  printf "%s\n" "$PWD"
+' "$PIPE_TARGET"
+assert_success
+test [ "$(cat "$STDOUT")" = "$PIPE_TARGET" ]
+assert_success
+test zsh_session 'go2 -l'
+assert_success
+test [ "$(cat "$STDOUT")" = "$(printf 'Current locations\n\n%*s -> %s ' 15 terminal-pipe "$PIPE_TARGET")" ]
+assert_success
+test zsh_session 'go2 -R terminal-pipe'
+assert_success
+
+# Batch import must retain the logical path of a starting symlink.
+mkdir -p "$TEST_ROOT/physical/child" "$TEST_ROOT/outside"
+ln -s "$TEST_ROOT/physical" "$TEST_ROOT/linked"
+ln -s "$TEST_ROOT/outside" "$TEST_ROOT/physical/child-link"
+test zsh_session 'cd -- "$1" && go2 -r' "$TEST_ROOT/linked"
+assert_success
+test grep -Fx "linked-linked|$TEST_ROOT/linked" "$ZSH_TEST_HOME/.local/share/go2dir/locations.txt"
+assert_success
+test grep -Fx "linked-child|$TEST_ROOT/linked/child" "$ZSH_TEST_HOME/.local/share/go2dir/locations.txt"
+assert_success
+test grep -F 'linked-child-link|' "$ZSH_TEST_HOME/.local/share/go2dir/locations.txt"
+assert_fail 1
+test zsh_session 'go2 linked-child > /dev/null && printf "%s\n" "$PWD"'
+assert_success
+test [ "$(cat "$STDOUT")" = "$TEST_ROOT/linked/child" ]
+assert_success
+test zsh_session 'go2 -R linked-linked > /dev/null && go2 -R linked-child'
+assert_success
+
+# The resolved path must retain its trailing newline until validation rejects it.
+NEWLINE_TARGET="$TEST_ROOT/"$'trailing-newline\n'
+mkdir -p "$NEWLINE_TARGET"
+test zsh_session 'cd -- "$1" && go2 -a . bad-relative-path' "$NEWLINE_TARGET"
+assert_fail 1
+assert_stderr '^Path cannot contain line breaks$'
+test [ "$(cat "$ZSH_TEST_HOME/.local/share/go2dir/locations.txt")" = '' ]
+assert_success
+
+# Literal backslashes must survive add, navigation, and removal in zsh.
+ESCAPED_TARGET="$TEST_ROOT/"'literal\n\tpath'
+ESCAPED_NAME='literal\nname'
+mkdir -p "$ESCAPED_TARGET"
+test zsh_session '
+  go2 -a "$1" "$2" > /dev/null &&
+  go2 "$2" > /dev/null &&
+  printf "%s\n" "$PWD"
+' "$ESCAPED_TARGET" "$ESCAPED_NAME"
+assert_success
+test [ "$(cat "$STDOUT")" = "$ESCAPED_TARGET" ]
+assert_success
+
+test zsh_session 'go2 -R "$1"' "$ESCAPED_NAME"
+assert_success
+test grep -F "$ESCAPED_NAME|" "$ZSH_TEST_HOME/.local/share/go2dir/locations.txt"
+assert_fail 1
+
+# Capture real _go2 candidates while replacing only the terminal insertion builtin.
+test zsh_session '
+  go2 -a "$1" "two words" > /dev/null &&
+  go2 -a "$1" "colon:name" > /dev/null &&
+  go2 -a "$1" "*" > /dev/null || exit 1
+  typeset -a CAPTURED_CANDIDATES=()
+  function compadd() {
+    local array_name="$2"
+    CAPTURED_CANDIDATES+=("${(@P)array_name}")
+  }
+  CURRENT=2
+  words=(go2 "")
+  _go2 || exit 1
+  printf "%s\n" "${CAPTURED_CANDIDATES[@]}"
+' "$TARGET"
+assert_success
+assert_stdout $'(^|\n)two words(\n|$)'
+assert_stdout $'(^|\n)colon:name(\n|$)'
+assert_stdout $'(^|\n)[*](\n|$)'
+assert_not_stdout $'(^|\n)two(\n|$)'
+assert_not_stdout $'(^|\n)colon(\n|$)'
+
+# Every zsh probe uses nounset, including calls with absent optional arguments.
+test zsh_session '
+  go2 > /dev/null &&
+  go2 -a "$1" > /dev/null &&
+  go2 -a "$1" --dash > /dev/null &&
+  go2 -- --dash > /dev/null &&
+  printf "%s\n" "$PWD"
+' "$TARGET"
+assert_success
+test [ "$(cat "$STDOUT")" = "$TARGET" ]
+assert_success
+
+mkdir -p "$TEST_ROOT/version-home"
+test env HOME="$TEST_ROOT/version-home" zsh -uc '
+  cd -- "$1" && source ./go2dir.sh && cd / && go2 -v
+' -- "$TEST_REPO"
+assert_success
+test [ "$(cat "$STDOUT")" = "go2dir version $(cat "$TEST_REPO/version.txt")" ]
+assert_success

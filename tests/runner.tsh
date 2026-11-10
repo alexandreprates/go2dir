@@ -1,0 +1,86 @@
+# Exercise infrastructure failures through the real teSHt runner.
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+RUNNER_ROOT="$GO2DIR_TEST_ROOT/runner"
+RUNNER="$GO2DIR_TEST_REPO/tests/support/tesht-runner.sh"
+mkdir -p "$RUNNER_ROOT"
+export GO2DIR_RUNNER_PROBE_DIR="$RUNNER_ROOT"
+
+cat > "$RUNNER_ROOT/pass.tsh" <<'EOF'
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+test [ 'two words' = 'two words' ]
+assert_success
+test [ '*' = '*' ]
+assert_success
+test bash -c 'exit 7'
+assert_fail 7
+EOF
+
+cat > "$RUNNER_ROOT/return.tsh" <<'EOF'
+return 2
+EOF
+
+cat > "$RUNNER_ROOT/assertion.tsh" <<'EOF'
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+test [ expected = actual ]
+assert_success
+EOF
+
+cat > "$RUNNER_ROOT/exit.tsh" <<'EOF'
+exit 0
+EOF
+
+test bash "$RUNNER" "$RUNNER_ROOT/pass.tsh"
+assert_success
+assert_stdout 'Congratulations'
+
+test bash "$RUNNER"
+assert_fail 2
+assert_stderr 'At least one test suite is required'
+
+test bash "$RUNNER" "$RUNNER_ROOT/missing.tsh"
+assert_fail 1
+assert_stderr 'Test suite is missing or unreadable'
+assert_not_stdout 'Congratulations'
+
+test bash "$RUNNER" "$RUNNER_ROOT/return.tsh"
+assert_fail 1
+assert_stdout 'Could not load test suite'
+assert_not_stdout 'Congratulations'
+
+test bash "$RUNNER" "$RUNNER_ROOT/return.tsh" "$RUNNER_ROOT/pass.tsh"
+assert_fail 1
+assert_stdout 'Could not load test suite'
+assert_not_stdout 'Congratulations'
+
+test bash "$RUNNER" "$RUNNER_ROOT/assertion.tsh" "$RUNNER_ROOT/pass.tsh"
+assert_fail 1
+assert_not_stdout 'Congratulations'
+
+test bash "$RUNNER" "$RUNNER_ROOT/exit.tsh"
+assert_fail 1
+assert_stderr 'Test suite did not finish'
+assert_not_stdout 'Congratulations'
+
+# A suite can disappear after preflight while an earlier suite runs.
+cp "$RUNNER_ROOT/pass.tsh" "$RUNNER_ROOT/later.tsh"
+cat > "$RUNNER_ROOT/remove.tsh" <<'EOF'
+rm -f "$GO2DIR_RUNNER_PROBE_DIR/later.tsh"
+source "$GO2DIR_TEST_REPO/tests/support/tesht-compat.sh"
+test true
+assert_success
+EOF
+test bash "$RUNNER" "$RUNNER_ROOT/remove.tsh" "$RUNNER_ROOT/later.tsh"
+assert_fail 1
+assert_stdout 'Could not load test suite'
+assert_not_stdout 'Congratulations'
+
+cp "$RUNNER_ROOT/pass.tsh" "$RUNNER_ROOT/unreadable.tsh"
+chmod 000 "$RUNNER_ROOT/unreadable.tsh"
+if [ ! -r "$RUNNER_ROOT/unreadable.tsh" ]; then
+  test bash "$RUNNER" "$RUNNER_ROOT/unreadable.tsh"
+  assert_fail 1
+  assert_stderr 'Test suite is missing or unreadable'
+  assert_not_stdout 'Congratulations'
+fi
+chmod 600 "$RUNNER_ROOT/unreadable.tsh"
+unset GO2DIR_RUNNER_PROBE_DIR

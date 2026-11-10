@@ -1,23 +1,23 @@
-# Go2Dir Install Script
-# source: https://github.com/alexandreprates/go2dir
+# go2dir installation script
+# Source: https://github.com/alexandreprates/go2dir
 
-echo "Preparing to install Go2Dir"
+echo "Preparing to install go2dir"
 
 SOURCEGO2DIR=$HOME/.go2dir/go2dir.sh
 LOCATIONS2GO=$HOME/.local/share/go2dir/locations.txt
 
 function fail_install() {
-  echo "Install failed: $1" >&2
+  echo "Installation failed: $1" >&2
   exit 1
 }
 
-case $RELEASE in
+case ${RELEASE-} in
     alpha)
-      echo "Using alpha version!"
+      echo "Using the alpha version"
       SOURCEURL="https://github.com/alexandreprates/go2dir/archive/master.tar.gz"
     ;;
     beta)
-      echo "Using beta version!"
+      echo "Using the beta version"
       SOURCEURL="https://github.com/alexandreprates/go2dir/archive/dev.tar.gz"
     ;;
     *)
@@ -30,22 +30,27 @@ esac
 
 function set_loader() {
   if [[ -a "$1" ]] && ! grep -F "### GO2DIR LOADER START ###" "$1" > /dev/null 2>&1; then
-    cat <<-EOS >> "$1"
+    cat <<-'EOS' >> "$1"
   ### GO2DIR LOADER START ###
-  # Enable go2 command
-  [[ -a "$SOURCEGO2DIR" ]] && source "$SOURCEGO2DIR"
+  # Enable the go2 command.
+  [[ -a "$HOME/.go2dir/go2dir.sh" ]] && source "$HOME/.go2dir/go2dir.sh"
   ### GO2DIR LOADER END ###
 EOS
+  else
+    return 0
   fi
 }
 
-# Creating locations
-[[ ! -d "$(dirname "$LOCATIONS2GO")" ]] && mkdir -p "$(dirname "$LOCATIONS2GO")"
-[[ ! -f "$LOCATIONS2GO" ]] && touch "$LOCATIONS2GO"
+# Create the locations file.
+mkdir -p -- "$(dirname -- "$LOCATIONS2GO")" || fail_install "could not create locations directory"
+if [[ ! -f "$LOCATIONS2GO" ]]; then
+  touch -- "$LOCATIONS2GO" || fail_install "could not create locations file"
+fi
+[[ -f "$LOCATIONS2GO" ]] || fail_install "locations file is not a regular file"
 
-# Placing source
-mkdir -p "$(dirname "$SOURCEGO2DIR")"
-ARCHIVE=$(mktemp)
+# Install the source files.
+mkdir -p -- "$(dirname -- "$SOURCEGO2DIR")" || fail_install "could not create installation directory"
+ARCHIVE=$(mktemp) || fail_install "could not create download file"
 trap 'rm -f "$ARCHIVE"' EXIT
 curl -fsSL "$SOURCEURL" -o "$ARCHIVE" || fail_install "could not download $SOURCEURL"
 tar -xzf "$ARCHIVE" -C "$(dirname "$SOURCEGO2DIR")" --strip 1 || fail_install "could not extract $SOURCEURL"
@@ -53,20 +58,42 @@ rm -f "$ARCHIVE"
 trap - EXIT
 [[ ! -f "$SOURCEGO2DIR" ]] && fail_install "source file was not installed"
 
-# Adding to load rc
-set_loader "$HOME/.bashrc"
-set_loader "$HOME/.zshrc"
+# Keep the same lock protocol as the runtime, without sourcing downloaded code.
+function with_locations_lock() (
+  local LOCK_DIR="$LOCATIONS2GO.lock" ATTEMPTS=0 GO2DIR_TEMP=''
+  until mkdir -- "$LOCK_DIR" 2>/dev/null; do
+    if [ "$ATTEMPTS" -ge 100 ]; then
+      printf "Could not lock locations file: %s\n" "$LOCATIONS2GO" >&2
+      return 1
+    fi
+    sleep 0.1 || return 1
+    ATTEMPTS=$((ATTEMPTS + 1))
+  done
+  trap 'if [ -n "$GO2DIR_TEMP" ]; then rm -f -- "$GO2DIR_TEMP"; fi; rmdir -- "$LOCK_DIR"' EXIT
+  trap 'exit 1' HUP INT TERM
+  "$@"
+)
 
-# Migrating old locations to new format
-source "$SOURCEGO2DIR"
-go2 -h > /dev/null # Load internal functions. I need this to use __alias_for_dir
-while IFS= read -r LINE; do
-  if [[ ! $LINE =~ \| ]]; then
-      printf "%s|%s\n" "$(__alias_for_dir "$LINE")" "$LINE" >> "$LOCATIONS2GO.tmp"
-  else
-      printf "%s\n" "$LINE" >> "$LOCATIONS2GO.tmp"
-  fi
-done < "$LOCATIONS2GO"
-mv "$LOCATIONS2GO.tmp" "$LOCATIONS2GO"
+function __migrate_locations() {
+  local LINE='' NAME
+  GO2DIR_TEMP=$(mktemp "$LOCATIONS2GO.XXXXXX") || return 1
+  while IFS= read -r LINE || [ -n "$LINE" ]; do
+    [ -n "$LINE" ] || continue
+    if [[ "$LINE" != *"|"* ]]; then
+      NAME=$(basename -- "$LINE") || return 1
+      NAME="${NAME// /-}"
+      printf "%s|%s\n" "$NAME" "$LINE" >> "$GO2DIR_TEMP" || return 1
+    else
+      printf "%s\n" "$LINE" >> "$GO2DIR_TEMP" || return 1
+    fi
+  done < "$LOCATIONS2GO" || return 1
+  mv -f -- "$GO2DIR_TEMP" "$LOCATIONS2GO"
+}
 
-printf "\n\nGo2dir has been successfully installed.\nStart a new session to enable it. And enjoy!\n"
+with_locations_lock __migrate_locations || fail_install "could not migrate locations"
+
+# Add loaders to shell configuration files.
+set_loader "$HOME/.bashrc" || fail_install "could not update .bashrc"
+set_loader "$HOME/.zshrc" || fail_install "could not update .zshrc"
+
+printf "\n\ngo2dir has been successfully installed.\nStart a new shell session to enable the go2 command.\n"

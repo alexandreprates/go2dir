@@ -15,22 +15,22 @@ jobs:
         include:
           - name: Bash latest
             image: bash:latest
-            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+            command: ./tests/run.sh
           - name: Bash 4
             image: bash:4
-            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+            command: ./tests/run.sh
           - name: Bash 3
             image: bash:3
-            command: ./tests/tesht/tesht.sh './tests/*.tsh'
+            command: ./tests/run.sh
           - name: zsh 5.9
             image: zshusers/zsh:5.9
-            command: ./tests/zsh.zsh
+            command: ./tests/run.sh zsh
           - name: zsh 5.8.1
             image: zshusers/zsh:5.8.1
-            command: ./tests/zsh.zsh
+            command: ./tests/run.sh zsh
           - name: zsh 5.8
             image: zshusers/zsh:5.8
-            command: ./tests/zsh.zsh
+            command: ./tests/run.sh zsh
 
     steps:
       - name: Checkout
@@ -44,7 +44,8 @@ jobs:
       - name: Run tests
         run: |
           docker run --rm \
-            -v "$PWD:/workspace" \
+            --user "$(id -u):$(id -g)" \
+            -v "$PWD:/workspace:ro" \
             -w /workspace \
             "${{ matrix.image }}" \
             sh -c "${{ matrix.command }}"
