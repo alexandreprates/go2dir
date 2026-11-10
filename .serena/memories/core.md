@@ -1,0 +1,21 @@
+# Core
+
+- go2dir is a sourced Bash/zsh directory-bookmark utility. Source `go2dir.sh` to define public `go2`; navigation changes the caller shell directory.
+- Source map:
+  - `go2dir.sh`: runtime, nested helpers, option dispatch, mapping readers/writers, source-time version-directory capture, completion loading.
+  - `install`: self-contained Bash downloader/installer, legacy migration, shared lock protocol, literal rc loader; does not source downloaded runtime.
+  - `completion/complete`: literal Bash candidates and context-aware shell quoting; no evaluating word-list expansion.
+  - `completion/compdef/_go2`: zsh literal arrays passed to `compadd`.
+  - `tests/run.sh [bash|zsh|all]`: isolated teSHt entry point (default: bash), current-worktree archive, local download fixture and cleanup.
+  - `tests/*.tsh`: every first-party suite uses native teSHt assertions/reporting; `go2dir.tsh`, `install.tsh`, `regressions.tsh`, `runner.tsh`, and `zsh.tsh`.
+  - `tests/support/tesht-compat.sh`: argument-preserving command capture for the unchanged pinned teSHt runner; contains no custom assertions.
+  - `tests/support/tesht-runner.sh`: preflights suites, guards the pinned runner's selected-suite source calls through native teSHt failure reporting, and rejects premature exits; owns log registration.
+  - `tests/runner.tsh`: native teSHt regressions for missing/unreadable suites, failed loads and assertions, disappearing files, and premature exits.
+  - `tests/zsh.tsh`: Bash-driven teSHt cases invoking actual zsh processes, including installed completion and nounset.
+  - `.github/workflows/test.yml`: Bash/zsh Docker matrix, unprivileged user, read-only repository mount.
+- Persistent rows: `alias|absolute/path` in `$HOME/.local/share/go2dir/locations.txt`. Names are unique; paths may repeat and contain pipes. Names reject pipes; both names and paths reject CR/LF.
+- `LOCATIONS2GO` is assigned when sourced. `GO2DIR_SOURCE_DIR` captures the absolute source directory before navigation.
+- Options: `-a PATH [NAME]`, `-l`, `-R NAME`, `-r` (current directory and immediate child directories), `-v`, `-h`; `go2 -- NAME` supports leading-hyphen aliases.
+- Every writer uses `locations.txt.lock`, unique same-directory temporaries, and checked atomic replacement. Runtime helpers are defined by calling `go2`; installer implements its own matching lock/migration functions for compatibility with older downloaded releases.
+- Serena Bash symbols work for `go2dir.sh`; extensionless installer/completion files may require pattern search or bounded shell reads.
+- Read `mem:conventions` for storage, literal-data and shell invariants; `mem:tech_stack` for platform/installer constraints; `mem:suggested_commands` for isolated checks; `mem:task_completion` before finishing changes; `mem:memory_maintenance` for maintaining this memory graph.
